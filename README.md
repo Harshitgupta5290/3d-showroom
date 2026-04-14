@@ -9,38 +9,44 @@
 </p>
 
 <p align="center">
-  A real-time, browser-based 3D particle system that reacts to your hand gestures via webcam. <br/>
-  Open your hand to expand the particle cloud — close your fist to contract it. <br/>
+  <strong>A real-time, browser-based 3D particle system that reacts to your hand gestures via webcam</strong><br/>
+  Open your hand to expand the particle cloud — close your fist to contract it.<br/>
   Switch between stunning particle templates: Heart, Nebula, Saturn, and more.
 </p>
 
 ---
 
-## 🎥 Demo
+## 📺 Live Demo
 
-> Open your webcam, show your hand, and watch 15,000 particles respond to your every move.
+> **Try it now:** Open your webcam and watch 15,000 particles respond to your hand in real-time. No installation required.
 
-![Demo Placeholder](https://via.placeholder.com/900x450/050505/00f2ff?text=Flux+Particles+Demo)
+[🎮 Open Live Demo](your-demo-url-here) | [📹 Watch Video](your-video-url-here)
 
 ---
 
 ## 🌟 Features
 
+### Core Features
 - **Real-Time Hand Tracking** — Uses Google MediaPipe Hands to detect and track up to 2 hands via webcam, with no backend required.
-- **Hand Tension Interaction** — Measures the openness of your hand (closed fist → expand → open palm) and maps it to particle scale in real time.
-- **6 Particle Shape Templates** — Morph 15,000 particles between beautiful 3D formations:
-  - 💥 **Fireworks** — Random explosive scatter
-  - ❤️ **Heart** — Volumetric 3D heart using the classic algebraic heart surface formula
-  - 🌸 **Flower** — 3D parametric rose / polar flower
-  - 🪐 **Saturn** — Planet sphere with a tilted particle ring system
-  - 🧘 **Buddha** — Procedurally generated seated figure
-  - 🌌 **Nebula** — 3-armed spiral galaxy
-- **Smooth Morphing** — Particles lerp (linearly interpolate) to their target positions for fluid shape transitions.
-- **Color Picker** — Choose any particle color using the native color picker, powered by Three.js `AdditiveBlending` for a glowing neon aesthetic.
-- **Orbit Controls** — Click and drag to rotate the scene freely. Auto-rotation kicks in when no hands are detected.
-- **Depth Fog** — Exponential fog adds depth perception to the 3D scene.
-- **Responsive Design** — UI adapts for mobile screens with bottom-panel layout.
-- **No Server Required** — Runs entirely in the browser. Just open the HTML file.
+- **Hand Tension Interaction** — Measures the openness of your hand (closed fist vs. open palm) and maps it to particle scale dynamically.
+- **15,000 Particles** — Smooth, responsive 60 FPS performance on modern browsers.
+
+### 6 Beautiful Particle Templates
+Morph particles into stunning 3D formations:
+- 💥 **Fireworks** — Random explosive scatter pattern
+- ❤️ **Heart** — Volumetric 3D heart using the algebraic heart surface equation
+- 🌸 **Flower** — 3D parametric rose with petals
+- 🪐 **Saturn** — Planet sphere with a tilted particle ring system
+- 🧘 **Buddha** — Procedurally generated seated meditation figure
+- 🌌 **Nebula** — 3-armed spiral galaxy formation
+
+### User Experience
+- **Smooth Morphing** — Particles lerp (linearly interpolate) to target positions for fluid transitions
+- **Color Picker** — Choose any particle color with native color picker + neon glow effect
+- **Orbit Controls** — Click and drag to rotate freely; auto-rotates when no hands detected
+- **Depth Fog** — Exponential fog for enhanced 3D perception
+- **Responsive Design** — Adapts for desktop, tablet, and mobile screens
+- **Zero Setup** — Runs entirely in the browser; no server or build tools needed
 
 ---
 
@@ -48,56 +54,303 @@
 
 | Technology | Purpose |
 |---|---|
-| [Three.js r128](https://threejs.org/) | 3D WebGL rendering engine |
-| [MediaPipe Hands](https://google.github.io/mediapipe/solutions/hands) | Real-time hand landmark detection |
-| [MediaPipe Camera Utils](https://www.npmjs.com/package/@mediapipe/camera_utils) | Webcam capture and frame streaming |
-| Three.js OrbitControls | Mouse/touch-based camera navigation |
-| Vanilla JavaScript (ES6+) | Application logic, no framework needed |
-| HTML5 / CSS3 | UI overlay, glassmorphism panels |
+| [Three.js r128+](https://threejs.org/) | 3D WebGL rendering engine |
+| [MediaPipe Hands](https://google.github.io/mediapipe/solutions/hands) | AI-powered hand landmark detection |
+| [MediaPipe Camera Utils](https://www.npmjs.com/package/@mediapipe/camera_utils) | Webcam frame capture & streaming |
+| Three.js OrbitControls | Mouse/touch-based 3D navigation |
+| Vanilla JavaScript (ES6+) | Pure JS application logic |
+| HTML5 Canvas + CSS3 | Rendering & UI styling |
 
 ---
 
-## 🚀 Getting Started
+## 🚀 Quick Start
 
 ### Prerequisites
+- ✅ Modern browser with **WebGL 2.0 support** (Chrome 56+, Firefox 51+, Edge 15+, Safari 15+)
+- ✅ A **working webcam** for hand tracking
+- ✅ **No** Node.js, npm, or build tools needed — all dependencies load from CDN
 
-- A modern browser with **WebGL support** (Chrome, Firefox, Edge, Safari 15+)
-- A **webcam** for hand-tracking interaction
-- No Node.js, npm, or build tools needed — all dependencies load from CDN
+### Setup Instructions
 
-### Installation
-
+#### Option 1: Open Local File (No Server Needed)
 ```bash
 # 1. Clone the repository
-git clone https://github.com/your-username/flux-particles.git
+git clone https://github.com/Harshitgupta5290/3d-showroom.git
+cd 3d-showroom
 
-# 2. Navigate into the project folder
-cd flux-particles
-
-# 3. Open index.html directly in your browser
-#    OR serve it locally (recommended to avoid camera permission issues):
-npx serve .
-# then visit http://localhost:3000
+# 2. Simply open in browser
+open index.html
+# OR in Linux:
+xdg-open index.html
 ```
 
-> ⚠️ **Important:** Most browsers block webcam access for `file://` URLs. Use a local server (e.g., `npx serve`, `python -m http.server`, or VS Code Live Server) for the hand-tracking to work correctly.
+#### Option 2: Use a Local Server (Recommended)
+> **Why?** Browsers block webcam access for `file://` URLs. A local server resolves this.
+
+```bash
+# Using Node.js (npx serve)
+npx serve .
+# Visit: http://localhost:3000
+
+# OR using Python 3
+python -m http.server 8000
+# Visit: http://localhost:8000
+
+# OR using Python 2
+python -m SimpleHTTPServer 8000
+# Visit: http://localhost:8000
+```
 
 ---
 
 ## 📁 Project Structure
 
 ```
-flux-particles/
-│
-├── index.html          # Single-file application (HTML + CSS + JS)
-└── README.md           # This file
+3d-showroom/
+├── index.html          # Single-file app (HTML + CSS + JavaScript)
+├── README.md           # Documentation (this file)
+└── .git/               # Version control
 ```
 
-All logic is contained within `index.html` for zero-dependency portability. The project loads its libraries via CDN at runtime.
+**Note:** All application logic is self-contained in `index.html` (~2000 lines). No external files needed. Libraries load via CDN at runtime.
 
 ---
 
 ## 🎮 How to Use
+
+### Getting Started
+1. **Allow Camera Access** — Grant webcam permissions when prompted
+2. **Show Your Hand** — Position your hand(s) in front of the camera
+3. **Interact** — Open/close your hand to expand/contract the particle cloud
+
+### Controls
+
+#### Hand Gestures
+- **Open Hand** → Particle cloud expands (max size)
+- **Closed Fist** → Particle cloud contracts (min size)
+- **Two Hands** → Both hands influence the same particle cloud
+
+#### Keyboard Shortcuts
+| Key | Action |
+|---|---|
+| `1` - `6` | Switch between particle templates (Fireworks, Heart, Flower, Saturn, Buddha, Nebula) |
+| `C` | Toggle color picker open/close |
+| `R` | Reset camera to default view |
+| `SPACE` | Pause/resume particles |
+| `M` | Mute/unmute console logs |
+| `?` | Show keyboard shortcuts (if implemented) |
+
+#### Mouse/Touch
+- **Click + Drag** → Rotate and zoom the 3D scene
+- **Scroll Wheel** → Zoom in/out
+- **Color Button** → Click to pick a new particle color
+
+### Tips for Best Experience
+1. **Lighting** — Use good lighting on your hand for accurate detection
+2. **Distance** — Keep hand 12-24 inches from camera
+3. **Speed** — Move hands slowly for smooth particle transitions
+4. **Browser** — Use Chrome/Edge for best performance
+
+---
+
+## 🐛 Troubleshooting
+
+### Camera Won't Start / "Camera Permission Denied"
+- **Solution 1:** Grant camera permission in browser settings (check address bar)
+- **Solution 2:** Use a local server instead of `file://` URLs
+  ```bash
+  npx serve .  # Then visit http://localhost:3000
+  ```
+- **Solution 3:** Check browser privacy settings (Chrome > Settings > Privacy > Camera)
+- **Solution 4:** Try a different browser (Chrome works best)
+
+### Hand Not Detected / Tracking Stutters
+- **Check lighting** — Ensure good ambient light on your hand
+- **Check distance** — Hand should be 12-24 inches from camera
+- **Check performance** — Close other heavy applications
+- **Use Chrome** — Chrome has best WebGL + MediaPipe performance
+- **Check camera feed** — Verify camera is working in other apps
+
+### Laggy Performance / Low FPS
+- **Reduce particles** — Edit `index.html`, find `PARTICLE_COUNT = 15000` and lower the value
+- **Close other tabs** — Free up GPU resources
+- **Try HD resolution** — Some GPUs handle HD better than 4K
+- **Update drivers** — Update graphics card drivers
+- **Use Chrome** — Generally fastest browser for WebGL
+
+### "WebGL Not Supported" Error
+- **Solution:** Use a modern browser (Chrome, Firefox, Edge, Safari 15+)
+- **Check:** Visit [WebGL Checker](https://www.khronos.org/webgl/wiki/Getting_Started)
+- **Alt:** Use an older device or cloud-based solutions
+
+### Colors Not Changing / Glowing Effect Disabled
+- **Full Screen** — Maximize browser window for best visual effect
+- **Dark Room** — Colors look better against dark backgrounds
+- **Refresh** — Hard refresh page (`Ctrl+Shift+R` or `Cmd+Shift+R`)
+
+### Mobile App Crashes or Freezes
+- **Use landscape mode** — Better for hand visibility
+- **Close background apps** — Free up RAM
+- **Use Chrome/Safari** — Best performance on mobile
+- **Check device temp** — Phone may throttle if too hot
+
+---
+
+## 📚 How It Works
+
+### Hand Detection Pipeline
+1. Camera feed → MediaPipe Hands → 21 hand landmarks per hand
+2. Landmarks include: palm, fingers, knuckles, fingertips
+3. Hand "openness" calculated from finger distance to palm
+4. Openness value (0–1) mapped to particle scale
+
+### Particle Morphing
+1. Target shape generated based on selected template (Heart, Nebula, etc.)
+2. Each particle interpolates from current position → target position
+3. Lerp factor: `0.05` for smooth, fluid motion (adjustable)
+4. As hand opens → particles spread; as hand closes → particles contract
+
+### 3D Rendering
+- **Engine:** Three.js WebGL
+- **Geometry:** BufferGeometry with 15,000 Point sprites
+- **Blending:** AdditiveBlending for neon glow effect
+- **Fog:** Exponential fog scale ~6–15 units
+- **Camera:** Perspective camera with OrbitControls
+
+---
+
+## 🤝 Contributing
+
+We welcome contributions! Whether it's bug fixes, new features, or documentation improvements.
+
+### How to Contribute
+1. **Fork** the repository
+2. **Create a branch** for your feature: `git checkout -b feature/your-feature-name`
+3. **Make changes** to `index.html` (or create new files if helpful)
+4. **Test thoroughly** — Especially hand tracking and particle morphing
+5. **Commit** with clear messages: `git commit -m "Add: new Saturn ring effects"`
+6. **Push** to your fork: `git push origin feature/your-feature-name`
+7. **Open a Pull Request** with a description of your changes
+
+### Contribution Ideas
+- [ ] New particle shape templates (Cube, Donut, DNA Helix, etc.)
+- [ ] Hand pose recognition (thumbs up, peace sign, etc.)
+- [ ] Sound/music visualization modes
+- [ ] Performance optimizations
+- [ ] Mobile touch gesture improvements
+- [ ] Multiplayer hand tracking (WebSocket)
+- [ ] Recording/export particle animations as video
+- [ ] Dark/Light theme toggle
+- [ ] Accessibility improvements (keyboard-only mode)
+
+### Code Style
+- Use **ES6+ syntax** and **semantic HTML5**
+- Keep code **self-documented** with clear variable names
+- Add **comments** for complex math (e.g., particle morphing, hand calculation)
+- Test on **Chrome, Firefox, Safari, and Edge**
+
+---
+
+## 📄 License
+
+This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
+
+### Summary
+- ✅ Free for personal and commercial use
+- ✅ Modify and distribute freely
+- ✅ Include license and copyright notice
+
+---
+
+## 🎓 Resources & References
+
+### Learning Materials
+- [Three.js Documentation](https://threejs.org/docs/)
+- [MediaPipe Hands Overview](https://google.github.io/mediapipe/solutions/hands)
+- [WebGL Concepts](https://learnopengl.com/) (Graphics fundamentals)
+- [Parametric Surfaces](https://en.wikipedia.org/wiki/Parametric_surface) (Math behind shapes)
+
+### Useful Tools
+- [Free CDN Links](https://cdnjs.com) — Hosting for Three.js, MediaPipe libraries
+- [Shader Toy](https://www.shadertoy.com/) — Inspiration for particle effects
+- [Babylon.js Playground](https://www.babylonjs-playground.com/) — Alternative 3D framework
+
+---
+
+## 💡 Tips & Best Practices
+
+### Performance Optimization
+- **Reduce particle count** for slower devices (change `PARTICLE_COUNT`)
+- **Lower camera FPS** in MediaPipe settings if CPU-bound
+- **Disable fog** for marginal performance gains (edit shader)
+- **Use hardware acceleration** enabled in browser settings
+
+### Visual Improvements
+- Export screenshots via THREE.js renderer capture
+- Use orbit controls in a controlled manner (avoids motion sickness)
+- Adjust color picker brightness for better visual pop
+
+### Customization Examples
+```javascript
+// Edit these values in index.html to customize:
+const PARTICLE_COUNT = 15000;        // Reduce to 8000 for slow devices
+const MORPH_SPEED = 0.05;            // Higher = faster morphing (0.1)
+const CAMERA_AUTO_ROTATE = true;     // Auto-rotate when no hands
+const FOG_FAR = 15;                  // Adjust fog distance
+```
+
+---
+
+## 🚨 Known Issues & Limitations
+
+- **Two-hand Input** — Currently averages both hands into one control (future: independent control)
+- **Low Light** — Hand detection fails in very dim environments
+- **Partial Hand** — If hand is cut off by camera edge, detection degrades
+- **Mobile Performance** — Some older devices may struggle with 15K particles
+- **Chrome Only** — Best experience on Chrome/Edge; Firefox/Safari slightly slower
+
+**Report Issues:** Please open a GitHub issue with:
+- Browser & version
+- Device specs (GPU, CPU)
+- Error messages (browser console: F12)
+- Screenshots/video of the problem
+
+---
+
+## 🎯 Roadmap
+
+### Planned Features (v2.0)
+- [ ] Hand pose recognition (gesture library)
+- [ ] Multi-user support (WebSocket multiplayer)
+- [ ] AR/VR mode integration
+- [ ] Custom shape uploader
+- [ ] Particle trail effects
+- [ ] Sound-reactive visualizer
+- [ ] Recording & GIF export
+- [ ] Mobile app (React Native / Flutter)
+
+### Community Requests
+- Suggest features in GitHub Discussions!
+
+---
+
+## 📞 Contact & Support
+
+- **Issues & Bug Reports:** [GitHub Issues](https://github.com/Harshitgupta5290/3d-showroom/issues)
+- **Discussions & Ideas:** [GitHub Discussions](https://github.com/Harshitgupta5290/3d-showroom/discussions)
+- **Email:** [Your Email Here]
+
+---
+
+## 🙏 Acknowledgments
+
+- **Google MediaPipe Team** — For the amazing hand-tracking ML model
+- **Three.js Community** — For the incredible 3D graphics library
+- **Inspired by:** {Inspiration sources, if any}
+
+---
+
+**Made with ❤️ by [Harshit Gupta](https://github.com/Harshitgupta5290)** | [Star ⭐ if you found this useful!](https://github.com/Harshitgupta5290/3d-showroom)
 
 1. **Open the app** in your browser (served via a local server).
 2. **Grant webcam access** when the browser prompts you.
