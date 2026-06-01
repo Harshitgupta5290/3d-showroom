@@ -4,1055 +4,1467 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LUMINA — WebGL Interactive Particle Engine</title>
-    <meta name="description" content="LUMINA: A real-time WebGL particle visualization engine with AI hand tracking, GPU cursor physics and UnrealBloom. Built for tech talks, client demos, and developer portfolios.">
+    <meta name="description" content="LUMINA: Real-time WebGL particle engine with AI hand tracking, GPU cursor physics and UnrealBloom. Built for tech talks, demos, and developer portfolios.">
     <meta property="og:title" content="LUMINA — WebGL Interactive Particle Engine">
     <meta property="og:description" content="15,000 bloom-lit particles react to your hands and cursor in real-time. Zero install.">
     <meta name="twitter:card" content="summary_large_image">
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23020408'/%3E%3Ccircle cx='16' cy='16' r='5' fill='%2300f2ff' opacity='0.95'/%3E%3Ccircle cx='16' cy='16' r='9' fill='%2300f2ff' opacity='0.18'/%3E%3Ccircle cx='7' cy='7' r='2.2' fill='%237c3aed' opacity='0.85'/%3E%3Ccircle cx='25' cy='7' r='2.2' fill='%23ec4899' opacity='0.85'/%3E%3Ccircle cx='7' cy='25' r='1.8' fill='%23ec4899' opacity='0.75'/%3E%3Ccircle cx='25' cy='25' r='1.8' fill='%237c3aed' opacity='0.75'/%3E%3C/svg%3E">
     <meta name="theme-color" content="#020408">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 
     <style>
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-        :root {
-            --cyan:   #00f2ff;
-            --purple: #7c3aed;
-            --pink:   #ec4899;
-            --blue:   #3b82f6;
-            --green:  #10b981;
-            --bg:     #020408;
-            --bg2:    #060c18;
-            --card:   rgba(255,255,255,0.03);
-            --border: rgba(255,255,255,0.07);
-            --text:   #e2e8f0;
-            --muted:  #64748b;
-            --font:   system-ui, -apple-system, 'Segoe UI', sans-serif;
-        }
-
-        html { scroll-behavior: smooth; }
-
-        body {
-            background: var(--bg);
-            color: var(--text);
-            font-family: var(--font);
-            overflow-x: hidden;
-            line-height: 1.6;
-        }
-
-        /* ─── Scrollbar ──────────────────────────────── */
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-track { background: var(--bg); }
-        ::-webkit-scrollbar-thumb { background: rgba(0,242,255,0.25); border-radius: 2px; }
-
-        /* ─── Nav ────────────────────────────────────── */
-        nav {
-            position: fixed;
-            top: 0; left: 0; right: 0;
-            z-index: 100;
-            height: 60px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 40px;
-            background: rgba(2,4,8,0.8);
-            backdrop-filter: blur(20px);
-            border-bottom: 1px solid var(--border);
-        }
-
-        .nav-logo {
-            display: flex;
-            align-items: center;
-            gap: 9px;
-            text-decoration: none;
-        }
-
-        .nav-logo-mark {
-            width: 28px; height: 28px;
-        }
-
-        .nav-logo-text {
-            font-size: 0.9rem;
-            font-weight: 800;
-            letter-spacing: 3px;
-            text-transform: uppercase;
-            background: linear-gradient(90deg, var(--cyan), var(--purple));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .nav-links {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .nav-link {
-            color: var(--muted);
-            text-decoration: none;
-            font-size: 0.8rem;
-            padding: 6px 12px;
-            border-radius: 6px;
-            transition: color 0.2s;
-        }
-
-        .nav-link:hover { color: var(--text); }
-
-        .nav-cta {
-            background: var(--cyan);
-            color: #000;
-            font-weight: 700;
-            font-size: 0.78rem;
-            padding: 7px 16px;
-            border-radius: 7px;
-            text-decoration: none;
-            letter-spacing: 0.3px;
-            transition: opacity 0.2s, transform 0.2s;
-        }
-
-        .nav-cta:hover { opacity: 0.85; transform: translateY(-1px); }
-
-        /* ─── Hero ───────────────────────────────────── */
-        #hero {
-            position: relative;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            padding: 120px 24px 80px;
-            overflow: hidden;
-        }
-
-        #bg-canvas {
-            position: absolute;
-            inset: 0;
-            z-index: 0;
-        }
-
-        .hero-inner {
-            position: relative;
-            z-index: 1;
-            max-width: 760px;
-        }
-
-        .hero-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 7px;
-            background: rgba(0,242,255,0.08);
-            border: 1px solid rgba(0,242,255,0.2);
-            border-radius: 20px;
-            padding: 5px 14px;
-            font-size: 0.7rem;
-            color: var(--cyan);
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            margin-bottom: 28px;
-        }
-
-        .hero-badge-dot {
-            width: 6px; height: 6px;
-            border-radius: 50%;
-            background: var(--cyan);
-            box-shadow: 0 0 6px var(--cyan);
-            animation: blink 2s ease-in-out infinite;
-        }
-
-        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.4} }
-
-        .hero-logo-mark {
-            width: 90px; height: 90px;
-            margin: 0 auto 24px;
-        }
-
-        .hero-title {
-            font-size: clamp(2.4rem, 6vw, 4.2rem);
-            font-weight: 900;
-            line-height: 1.1;
-            letter-spacing: -1px;
-            color: #fff;
-            margin-bottom: 20px;
-        }
-
-        .hero-title em {
-            font-style: normal;
-            background: linear-gradient(135deg, var(--cyan) 0%, var(--purple) 50%, var(--pink) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .hero-sub {
-            font-size: clamp(1rem, 2vw, 1.2rem);
-            color: #94a3b8;
-            max-width: 560px;
-            margin: 0 auto 36px;
-            line-height: 1.7;
-        }
-
-        .hero-ctas {
-            display: flex;
-            gap: 12px;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-
-        .btn-launch {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            background: linear-gradient(135deg, var(--cyan), var(--purple));
-            color: #fff;
-            text-decoration: none;
-            font-weight: 700;
-            font-size: 0.95rem;
-            padding: 13px 28px;
-            border-radius: 10px;
-            letter-spacing: 0.3px;
-            transition: opacity 0.2s, transform 0.2s, box-shadow 0.2s;
-            box-shadow: 0 4px 30px rgba(0,242,255,0.2);
-        }
-
-        .btn-launch:hover {
-            opacity: 0.9;
-            transform: translateY(-2px);
-            box-shadow: 0 8px 40px rgba(0,242,255,0.35);
-        }
-
-        .btn-ghost {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            background: transparent;
-            border: 1px solid var(--border);
-            color: var(--text);
-            text-decoration: none;
-            font-size: 0.9rem;
-            padding: 13px 24px;
-            border-radius: 10px;
-            transition: border-color 0.2s, background 0.2s;
-        }
-
-        .btn-ghost:hover {
-            border-color: rgba(255,255,255,0.2);
-            background: rgba(255,255,255,0.04);
-        }
-
-        .hero-scroll {
-            position: absolute;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 6px;
-            color: var(--muted);
-            font-size: 0.65rem;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            animation: bounce 2s ease-in-out infinite;
-        }
-
-        @keyframes bounce { 0%,100%{transform:translateX(-50%) translateY(0)} 50%{transform:translateX(-50%) translateY(6px)} }
-
-        /* ─── Stats bar ──────────────────────────────── */
-        #stats {
-            border-top: 1px solid var(--border);
-            border-bottom: 1px solid var(--border);
-            background: rgba(255,255,255,0.015);
-        }
-
-        .stats-inner {
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 0 24px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 0;
-        }
-
-        .stat {
-            padding: 22px 16px;
-            text-align: center;
-            flex: 1;
-            min-width: 100px;
-            border-right: 1px solid var(--border);
-        }
-
-        .stat:last-child { border-right: none; }
-
-        .stat-num {
-            font-size: 1.5rem;
-            font-weight: 900;
-            background: linear-gradient(135deg, var(--cyan), var(--purple));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            line-height: 1;
-            margin-bottom: 4px;
-        }
-
-        .stat-lbl {
-            font-size: 0.62rem;
-            color: var(--muted);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        /* ─── Section commons ────────────────────────── */
-        section { padding: 100px 24px; }
-
-        .section-inner {
-            max-width: 1100px;
-            margin: 0 auto;
-        }
-
-        .section-tag {
-            display: inline-block;
-            font-size: 0.62rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            color: var(--cyan);
-            margin-bottom: 14px;
-        }
-
-        .section-title {
-            font-size: clamp(1.7rem, 4vw, 2.6rem);
-            font-weight: 900;
-            color: #fff;
-            line-height: 1.2;
-            margin-bottom: 14px;
-        }
-
-        .section-title span {
-            background: linear-gradient(135deg, var(--cyan), var(--purple));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .section-sub {
-            font-size: 1rem;
-            color: var(--muted);
-            max-width: 560px;
-            margin-bottom: 56px;
-            line-height: 1.7;
-        }
-
-        /* ─── Animate in on scroll ───────────────────── */
-        .fade-up {
-            opacity: 0;
-            transform: translateY(28px);
-            transition: opacity 0.6s ease, transform 0.6s ease;
-        }
-
-        .fade-up.in { opacity: 1; transform: translateY(0); }
-
-        /* ─── Use Cases ──────────────────────────────── */
-        #use-cases { background: var(--bg2); }
-
-        .cases-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 16px;
-        }
-
-        .case-card {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 14px;
-            padding: 28px;
-            transition: border-color 0.25s, transform 0.25s, box-shadow 0.25s;
-            cursor: default;
-        }
-
-        .case-card:hover {
-            border-color: rgba(0,242,255,0.2);
-            transform: translateY(-3px);
-            box-shadow: 0 12px 40px rgba(0,0,0,0.35);
-        }
-
-        .case-icon {
-            font-size: 2rem;
-            margin-bottom: 14px;
-            display: block;
-        }
-
-        .case-title {
-            font-size: 1rem;
-            font-weight: 700;
-            color: #fff;
-            margin-bottom: 8px;
-        }
-
-        .case-desc {
-            font-size: 0.85rem;
-            color: var(--muted);
-            line-height: 1.65;
-        }
-
-        .case-tag {
-            display: inline-block;
-            margin-top: 14px;
-            font-size: 0.62rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            padding: 3px 9px;
-            border-radius: 20px;
-            background: rgba(0,242,255,0.08);
-            color: var(--cyan);
-            border: 1px solid rgba(0,242,255,0.15);
-        }
-
-        /* ─── Features ───────────────────────────────── */
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 16px;
-        }
-
-        .feat-card {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 14px;
-            padding: 28px 24px;
-            transition: all 0.25s;
-        }
-
-        .feat-card:hover {
-            border-color: rgba(124,58,237,0.3);
-            box-shadow: 0 0 30px rgba(124,58,237,0.08);
-            transform: translateY(-2px);
-        }
-
-        .feat-icon-wrap {
-            width: 44px; height: 44px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.3rem;
-            margin-bottom: 16px;
-        }
-
-        .feat-title {
-            font-size: 0.95rem;
-            font-weight: 700;
-            color: #fff;
-            margin-bottom: 8px;
-        }
-
-        .feat-desc {
-            font-size: 0.82rem;
-            color: var(--muted);
-            line-height: 1.65;
-        }
-
-        /* ─── Shapes showcase ────────────────────────── */
-        #shapes { background: var(--bg2); }
-
-        .shapes-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
-        }
-
-        .shape-card {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 22px 18px;
-            text-align: center;
-            transition: all 0.2s;
-        }
-
-        .shape-card:hover {
-            border-color: rgba(0,242,255,0.2);
-            background: rgba(0,242,255,0.04);
-            transform: scale(1.02);
-        }
-
-        .shape-em { font-size: 1.8rem; display: block; margin-bottom: 8px; }
-
-        .shape-name {
-            font-size: 0.8rem;
-            font-weight: 700;
-            color: #fff;
-            margin-bottom: 4px;
-        }
-
-        .shape-hint {
-            font-size: 0.68rem;
-            color: var(--muted);
-            line-height: 1.4;
-        }
-
-        /* ─── Interaction modes ──────────────────────── */
-        .interact-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-            gap: 16px;
-        }
-
-        .interact-card {
-            border-radius: 16px;
-            padding: 32px 28px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .ic-cyan   { background: linear-gradient(135deg, rgba(0,242,255,0.07), rgba(0,242,255,0.02)); border: 1px solid rgba(0,242,255,0.15); }
-        .ic-purple { background: linear-gradient(135deg, rgba(124,58,237,0.08), rgba(124,58,237,0.02)); border: 1px solid rgba(124,58,237,0.15); }
-        .ic-pink   { background: linear-gradient(135deg, rgba(236,72,153,0.07), rgba(236,72,153,0.02)); border: 1px solid rgba(236,72,153,0.15); }
-
-        .interact-icon { font-size: 2.2rem; margin-bottom: 14px; display: block; }
-
-        .interact-title {
-            font-size: 1.05rem;
-            font-weight: 800;
-            color: #fff;
-            margin-bottom: 10px;
-        }
-
-        .interact-desc {
-            font-size: 0.83rem;
-            color: #94a3b8;
-            line-height: 1.65;
-        }
-
-        .interact-kbs {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-            margin-top: 16px;
-        }
-
-        .kb {
-            background: rgba(255,255,255,0.07);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 5px;
-            padding: 3px 8px;
-            font-size: 0.65rem;
-            font-family: monospace;
-            color: var(--text);
-        }
-
-        /* ─── Final CTA ──────────────────────────────── */
-        #final-cta {
-            background: var(--bg2);
-            text-align: center;
-            border-top: 1px solid var(--border);
-        }
-
-        .cta-glow {
-            position: absolute;
-            width: 500px; height: 300px;
-            background: radial-gradient(ellipse, rgba(0,242,255,0.06) 0%, transparent 70%);
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            pointer-events: none;
-        }
-
-        #final-cta .section-inner {
-            position: relative;
-        }
-
-        .cta-eyebrow {
-            font-size: 0.68rem;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            color: var(--cyan);
-            margin-bottom: 18px;
-        }
-
-        .cta-headline {
-            font-size: clamp(2rem, 5vw, 3.2rem);
-            font-weight: 900;
-            color: #fff;
-            line-height: 1.15;
-            margin-bottom: 16px;
-        }
-
-        .cta-sub {
-            font-size: 1rem;
-            color: var(--muted);
-            margin-bottom: 36px;
-            max-width: 500px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-
-        /* ─── Footer ─────────────────────────────────── */
-        footer {
-            border-top: 1px solid var(--border);
-            padding: 28px 40px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 12px;
-        }
-
-        .footer-brand {
-            font-size: 0.72rem;
-            font-weight: 800;
-            letter-spacing: 3px;
-            text-transform: uppercase;
-            background: linear-gradient(90deg, var(--cyan), var(--purple));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .footer-links {
-            display: flex;
-            gap: 20px;
-        }
-
-        .footer-link {
-            font-size: 0.75rem;
-            color: var(--muted);
-            text-decoration: none;
-            transition: color 0.2s;
-        }
-
-        .footer-link:hover { color: var(--text); }
-
-        .footer-copy {
-            font-size: 0.72rem;
-            color: #374151;
-        }
-
-        /* ─── Mobile ─────────────────────────────────── */
-        @media (max-width: 640px) {
-            nav { padding: 0 20px; }
-            .nav-link { display: none; }
-            section { padding: 70px 20px; }
-            .shapes-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
-            .stat { padding: 18px 8px; }
-            .stat-num { font-size: 1.2rem; }
-            footer { padding: 24px 20px; }
-            .footer-links { gap: 14px; }
-        }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+        --cyan:   #00f2ff;
+        --purple: #7c3aed;
+        --pink:   #ec4899;
+        --blue:   #3b82f6;
+        --green:  #10b981;
+        --amber:  #f59e0b;
+        --bg:     #020408;
+        --bg2:    #060c18;
+        --card:   rgba(255,255,255,0.03);
+        --border: rgba(255,255,255,0.07);
+        --text:   #e2e8f0;
+        --muted:  #64748b;
+        --font:   'Inter', system-ui, -apple-system, sans-serif;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: var(--font);
+        overflow-x: hidden;
+        line-height: 1.6;
+    }
+
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: rgba(0,242,255,0.2); border-radius: 2px; }
+
+    /* Subtle grid texture */
+    body::before {
+        content: '';
+        position: fixed;
+        inset: 0;
+        background-image:
+            linear-gradient(rgba(255,255,255,0.016) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255,255,255,0.016) 1px, transparent 1px);
+        background-size: 64px 64px;
+        pointer-events: none;
+        z-index: 0;
+    }
+
+    nav, section, #stats, .marquee-wrap, footer, #preview { position: relative; z-index: 1; }
+
+    /* ── Nav ───────────────────────────────────────────── */
+    nav {
+        position: fixed;
+        top: 0; left: 0; right: 0;
+        z-index: 200;
+        height: 64px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 48px;
+        background: rgba(2,4,8,0.65);
+        backdrop-filter: blur(24px) saturate(1.8);
+        border-bottom: 1px solid var(--border);
+    }
+
+    .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+    .nav-logo-mark { width: 30px; height: 30px; }
+
+    .nav-logo-text {
+        font-size: 0.85rem;
+        font-weight: 800;
+        letter-spacing: 4px;
+        text-transform: uppercase;
+        background: linear-gradient(90deg, var(--cyan), var(--purple));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .nav-links { display: flex; align-items: center; gap: 6px; }
+
+    .nav-link {
+        color: var(--muted);
+        text-decoration: none;
+        font-size: 0.82rem;
+        font-weight: 500;
+        padding: 7px 14px;
+        border-radius: 8px;
+        transition: color 0.2s, background 0.2s;
+    }
+    .nav-link:hover { color: var(--text); background: rgba(255,255,255,0.05); }
+
+    .nav-cta {
+        background: var(--cyan);
+        color: #000;
+        font-weight: 700;
+        font-size: 0.8rem;
+        padding: 8px 18px;
+        border-radius: 8px;
+        text-decoration: none;
+        transition: box-shadow 0.25s, transform 0.2s;
+        box-shadow: 0 0 20px rgba(0,242,255,0.3);
+    }
+    .nav-cta:hover { box-shadow: 0 0 35px rgba(0,242,255,0.55); transform: translateY(-1px); }
+
+    /* ── Hero ─────────────────────────────────────────── */
+    #hero {
+        position: relative;
+        height: 100vh;
+        min-height: 700px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 80px 24px 60px;
+        overflow: hidden;
+    }
+
+    #bg-canvas {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 0;
+        display: block;
+    }
+
+    /* Aurora blobs */
+    .aurora {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(90px);
+        pointer-events: none;
+        z-index: 0;
+    }
+    .aurora-1 {
+        width: 800px; height: 600px;
+        background: radial-gradient(ellipse, rgba(0,242,255,0.13) 0%, transparent 70%);
+        top: -20%; left: -18%;
+        animation: driftA 10s ease-in-out infinite alternate;
+    }
+    .aurora-2 {
+        width: 700px; height: 700px;
+        background: radial-gradient(ellipse, rgba(124,58,237,0.11) 0%, transparent 70%);
+        top: 0; right: -12%;
+        animation: driftB 13s ease-in-out infinite alternate;
+    }
+    .aurora-3 {
+        width: 550px; height: 450px;
+        background: radial-gradient(ellipse, rgba(236,72,153,0.09) 0%, transparent 70%);
+        bottom: 5%; left: 28%;
+        animation: driftA 17s ease-in-out infinite alternate-reverse;
+    }
+    @keyframes driftA {
+        0%   { transform: translate(0,0) scale(1); }
+        100% { transform: translate(40px,25px) scale(1.07); }
+    }
+    @keyframes driftB {
+        0%   { transform: translate(0,0) scale(1); }
+        100% { transform: translate(-35px,30px) scale(0.94); }
+    }
+
+    /* Bottom + top vignette over canvas */
+    #hero::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background:
+            radial-gradient(ellipse at 50% 110%, rgba(2,4,8,0.95) 0%, transparent 55%),
+            radial-gradient(ellipse at 50% -10%, rgba(2,4,8,0.6) 0%, transparent 50%),
+            linear-gradient(to bottom, rgba(2,4,8,0.4) 0%, transparent 15%, transparent 85%, rgba(2,4,8,0.9) 100%);
+        pointer-events: none;
+        z-index: 1;
+    }
+
+    .hero-inner {
+        position: relative;
+        z-index: 2;
+        max-width: 880px;
+    }
+
+    .hero-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(0,242,255,0.07);
+        border: 1px solid rgba(0,242,255,0.2);
+        border-radius: 24px;
+        padding: 7px 18px;
+        font-size: 0.67rem;
+        font-weight: 600;
+        color: rgba(0,242,255,0.9);
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        margin-bottom: 40px;
+        backdrop-filter: blur(12px);
+    }
+
+    .hero-badge-dot {
+        width: 6px; height: 6px;
+        border-radius: 50%;
+        background: var(--cyan);
+        box-shadow: 0 0 8px var(--cyan), 0 0 16px rgba(0,242,255,0.4);
+        animation: blink 2.5s ease-in-out infinite;
+        flex-shrink: 0;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.35} }
+
+    .hero-logo-mark {
+        width: 148px; height: 148px;
+        margin: 0 auto 36px;
+        filter: drop-shadow(0 0 40px rgba(0,242,255,0.35));
+    }
+
+    .hero-title {
+        font-size: clamp(3.2rem, 8vw, 5.8rem);
+        font-weight: 900;
+        line-height: 1.03;
+        letter-spacing: -2.5px;
+        color: #fff;
+        margin-bottom: 26px;
+    }
+
+    .hero-title em {
+        font-style: normal;
+        background: linear-gradient(135deg, var(--cyan) 0%, var(--purple) 50%, var(--pink) 100%);
+        background-size: 200% 200%;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        animation: gradAnim 4s ease-in-out infinite;
+    }
+    @keyframes gradAnim {
+        0%,100% { background-position: 0% 50%; }
+        50%      { background-position: 100% 50%; }
+    }
+
+    .hero-sub {
+        font-size: clamp(1rem, 2.2vw, 1.22rem);
+        font-weight: 400;
+        color: #94a3b8;
+        max-width: 590px;
+        margin: 0 auto 48px;
+        line-height: 1.8;
+    }
+    .hero-sub strong { color: #e2e8f0; font-weight: 600; }
+
+    .hero-ctas { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+
+    .btn-launch {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        background: linear-gradient(135deg, var(--cyan) 0%, #009ccc 100%);
+        color: #000;
+        text-decoration: none;
+        font-weight: 800;
+        font-size: 0.95rem;
+        padding: 15px 32px;
+        border-radius: 12px;
+        transition: box-shadow 0.25s, transform 0.25s;
+        box-shadow: 0 4px 30px rgba(0,242,255,0.35);
+    }
+    .btn-launch:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 55px rgba(0,242,255,0.5);
+    }
+
+    .btn-ghost {
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
+        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(255,255,255,0.13);
+        color: var(--text);
+        text-decoration: none;
+        font-size: 0.92rem;
+        font-weight: 500;
+        padding: 15px 28px;
+        border-radius: 12px;
+        transition: border-color 0.2s, background 0.2s, transform 0.2s;
+        backdrop-filter: blur(10px);
+    }
+    .btn-ghost:hover {
+        border-color: rgba(255,255,255,0.28);
+        background: rgba(255,255,255,0.09);
+        transform: translateY(-2px);
+    }
+
+    .hero-scroll {
+        position: absolute;
+        bottom: 32px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        z-index: 2;
+        pointer-events: none;
+    }
+    .scroll-line {
+        width: 1px; height: 44px;
+        background: linear-gradient(to bottom, var(--cyan), transparent);
+        animation: scrollPulse 2s ease-in-out infinite;
+    }
+    .scroll-txt {
+        font-size: 0.58rem;
+        letter-spacing: 2.5px;
+        text-transform: uppercase;
+        color: rgba(0,242,255,0.45);
+        font-weight: 600;
+    }
+    @keyframes scrollPulse {
+        0%,100% { opacity:0.3; transform: scaleY(1); }
+        50%      { opacity:1;   transform: scaleY(1.15); }
+    }
+
+    /* ── Marquee ───────────────────────────────────────── */
+    .marquee-wrap {
+        border-top: 1px solid var(--border);
+        border-bottom: 1px solid var(--border);
+        background: rgba(0,242,255,0.012);
+        padding: 15px 0;
+        overflow: hidden;
+    }
+    .marquee-track {
+        display: flex;
+        gap: 0;
+        width: max-content;
+        animation: marqueeRun 28s linear infinite;
+    }
+    .marquee-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        letter-spacing: 1.8px;
+        text-transform: uppercase;
+        color: var(--muted);
+        white-space: nowrap;
+        padding: 0 32px;
+    }
+    .marquee-item::before {
+        content: '✦';
+        color: var(--cyan);
+        font-size: 0.48rem;
+        opacity: 0.7;
+    }
+    @keyframes marqueeRun {
+        0%   { transform: translateX(0); }
+        100% { transform: translateX(-50%); }
+    }
+
+    /* ── Stats ─────────────────────────────────────────── */
+    #stats { padding: 80px 24px; }
+
+    .stats-wrap {
+        max-width: 1040px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        background: var(--border);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        overflow: hidden;
+        gap: 1px;
+    }
+
+    .stat {
+        background: var(--bg);
+        padding: 36px 16px;
+        text-align: center;
+        transition: background 0.25s;
+        cursor: default;
+    }
+    .stat:hover { background: rgba(0,242,255,0.025); }
+
+    .stat-num {
+        font-size: 2.4rem;
+        font-weight: 900;
+        background: linear-gradient(135deg, var(--cyan), var(--purple));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        line-height: 1;
+        margin-bottom: 8px;
+        letter-spacing: -1.5px;
+    }
+    .stat-lbl {
+        font-size: 0.58rem;
+        font-weight: 600;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+    }
+
+    /* ── Preview section ────────────────────────────────── */
+    #preview {
+        padding: 0 24px 100px;
+        background: var(--bg2);
+        border-top: 1px solid var(--border);
+    }
+
+    .preview-label {
+        text-align: center;
+        padding: 60px 0 40px;
+    }
+
+    .preview-window {
+        max-width: 960px;
+        margin: 0 auto;
+        border-radius: 16px;
+        overflow: hidden;
+        border: 1px solid rgba(255,255,255,0.1);
+        box-shadow:
+            0 40px 100px rgba(0,0,0,0.6),
+            0 0 0 1px rgba(255,255,255,0.05),
+            0 0 80px rgba(0,242,255,0.06);
+    }
+
+    .preview-chrome {
+        background: #0d1117;
+        padding: 12px 18px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .chrome-dots { display: flex; gap: 6px; }
+    .chrome-dot {
+        width: 12px; height: 12px;
+        border-radius: 50%;
+    }
+    .cd-r { background: #ff5f57; }
+    .cd-y { background: #febc2e; }
+    .cd-g { background: #28c840; }
+
+    .chrome-url {
+        flex: 1;
+        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(255,255,255,0.07);
+        border-radius: 6px;
+        padding: 5px 12px;
+        font-size: 0.72rem;
+        color: var(--muted);
+        font-family: 'SF Mono', 'Fira Code', monospace;
+        max-width: 400px;
+        margin: 0 auto;
+    }
+
+    #preview-canvas {
+        display: block;
+        width: 100%;
+        height: 460px;
+        background: var(--bg);
+        cursor: crosshair;
+    }
+
+    .preview-hint {
+        text-align: center;
+        margin-top: 18px;
+        font-size: 0.72rem;
+        color: var(--muted);
+        letter-spacing: 0.5px;
+    }
+    .preview-hint span {
+        color: var(--cyan);
+        opacity: 0.8;
+    }
+
+    /* ── Section commons ────────────────────────────────── */
+    section { padding: 100px 24px; }
+    .section-inner { max-width: 1120px; margin: 0 auto; }
+
+    .section-tag {
+        display: inline-block;
+        font-size: 0.58rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 2.5px;
+        color: var(--cyan);
+        margin-bottom: 12px;
+        opacity: 0.85;
+    }
+
+    .section-title {
+        font-size: clamp(1.9rem, 4.5vw, 2.9rem);
+        font-weight: 900;
+        color: #fff;
+        line-height: 1.12;
+        letter-spacing: -0.7px;
+        margin-bottom: 16px;
+    }
+    .section-title span {
+        background: linear-gradient(135deg, var(--cyan), var(--purple));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .section-sub {
+        font-size: 1rem;
+        color: var(--muted);
+        max-width: 520px;
+        margin-bottom: 60px;
+        line-height: 1.78;
+    }
+
+    .fade-up {
+        opacity: 0;
+        transform: translateY(32px);
+        transition: opacity 0.7s cubic-bezier(0.16,1,0.3,1),
+                    transform 0.7s cubic-bezier(0.16,1,0.3,1);
+    }
+    .fade-up.in { opacity: 1; transform: translateY(0); }
+
+    /* ── Use Cases ──────────────────────────────────────── */
+    #use-cases { background: var(--bg); }
+
+    .cases-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
+        gap: 16px;
+    }
+
+    .case-card {
+        background: rgba(255,255,255,0.025);
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        padding: 34px 30px;
+        position: relative;
+        overflow: hidden;
+        transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s;
+        cursor: default;
+    }
+    .case-card::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, rgba(0,242,255,0.05), transparent 55%);
+        opacity: 0;
+        transition: opacity 0.4s;
+    }
+    .case-card:hover {
+        border-color: rgba(0,242,255,0.28);
+        transform: translateY(-5px);
+        box-shadow: 0 24px 70px rgba(0,0,0,0.45), 0 0 40px rgba(0,242,255,0.07);
+    }
+    .case-card:hover::before { opacity: 1; }
+
+    .case-icon {
+        font-size: 2.4rem;
+        margin-bottom: 18px;
+        display: block;
+        filter: drop-shadow(0 0 10px rgba(0,242,255,0.35));
+    }
+    .case-title {
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: #fff;
+        margin-bottom: 10px;
+        letter-spacing: -0.2px;
+    }
+    .case-desc {
+        font-size: 0.84rem;
+        color: var(--muted);
+        line-height: 1.72;
+    }
+    .case-tag {
+        display: inline-block;
+        margin-top: 18px;
+        font-size: 0.58rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        padding: 4px 11px;
+        border-radius: 20px;
+        background: rgba(0,242,255,0.07);
+        color: rgba(0,242,255,0.8);
+        border: 1px solid rgba(0,242,255,0.13);
+    }
+
+    /* ── Features ───────────────────────────────────────── */
+    #features { background: var(--bg2); }
+
+    .features-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 16px;
+    }
+
+    .feat-card {
+        background: rgba(255,255,255,0.025);
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        padding: 32px 28px;
+        position: relative;
+        overflow: hidden;
+        transition: transform 0.3s, box-shadow 0.3s, border-color 0.3s, background 0.3s;
+    }
+
+    /* Top-edge gradient line (appears on hover) */
+    .feat-card::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 1px;
+        opacity: 0;
+        transition: opacity 0.4s;
+        background: linear-gradient(90deg, transparent, rgba(var(--fr),var(--fg),var(--fb),0.6), transparent);
+    }
+    .feat-card:hover::before { opacity: 1; }
+
+    .feat-card:hover {
+        transform: translateY(-4px);
+        border-color: rgba(var(--fr),var(--fg),var(--fb),0.18);
+        box-shadow: 0 20px 60px rgba(0,0,0,0.45),
+                    0 0 40px rgba(var(--fr),var(--fg),var(--fb),0.07);
+        background: rgba(var(--fr),var(--fg),var(--fb),0.04);
+    }
+
+    .feat-icon-wrap {
+        width: 50px; height: 50px;
+        border-radius: 13px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin-bottom: 20px;
+    }
+    .feat-title {
+        font-size: 1rem;
+        font-weight: 700;
+        color: #fff;
+        margin-bottom: 10px;
+        letter-spacing: -0.15px;
+    }
+    .feat-desc {
+        font-size: 0.83rem;
+        color: var(--muted);
+        line-height: 1.72;
+    }
+
+    /* ── Shapes ─────────────────────────────────────────── */
+    #shapes { background: var(--bg); }
+
+    .shapes-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+    }
+
+    .shape-card {
+        background: rgba(255,255,255,0.025);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 28px 16px;
+        text-align: center;
+        transition: all 0.25s;
+        cursor: default;
+        position: relative;
+        overflow: hidden;
+    }
+    .shape-card::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(ellipse at 50% 110%, rgba(0,242,255,0.07), transparent 70%);
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+    .shape-card:hover {
+        border-color: rgba(0,242,255,0.25);
+        transform: translateY(-3px) scale(1.02);
+        box-shadow: 0 12px 40px rgba(0,0,0,0.35);
+    }
+    .shape-card:hover::after { opacity: 1; }
+
+    .shape-key {
+        font-size: 0.56rem;
+        font-weight: 700;
+        letter-spacing: 2px;
+        color: var(--muted);
+        margin-bottom: 8px;
+        opacity: 0.7;
+    }
+    .shape-em { font-size: 2rem; display: block; margin-bottom: 10px; }
+    .shape-name {
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: #fff;
+        margin-bottom: 5px;
+    }
+    .shape-hint { font-size: 0.67rem; color: var(--muted); line-height: 1.45; }
+
+    /* ── Interaction ────────────────────────────────────── */
+    #interact { background: var(--bg2); }
+
+    .interact-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 16px;
+    }
+
+    .interact-card {
+        border-radius: 20px;
+        padding: 38px 32px;
+        position: relative;
+        overflow: hidden;
+        transition: transform 0.3s, box-shadow 0.3s;
+    }
+    .interact-card:hover { transform: translateY(-5px); box-shadow: 0 28px 70px rgba(0,0,0,0.45); }
+
+    .ic-cyan   { background: linear-gradient(135deg,rgba(0,242,255,0.09),rgba(0,242,255,0.02)); border:1px solid rgba(0,242,255,0.15); }
+    .ic-purple { background: linear-gradient(135deg,rgba(124,58,237,0.1),rgba(124,58,237,0.02)); border:1px solid rgba(124,58,237,0.15); }
+    .ic-pink   { background: linear-gradient(135deg,rgba(236,72,153,0.09),rgba(236,72,153,0.02)); border:1px solid rgba(236,72,153,0.14); }
+
+    .interact-icon { font-size: 2.5rem; margin-bottom: 18px; display: block; }
+    .interact-title { font-size: 1.12rem; font-weight: 800; color: #fff; margin-bottom: 12px; letter-spacing: -0.2px; }
+    .interact-desc { font-size: 0.84rem; color: #94a3b8; line-height: 1.72; }
+
+    .interact-kbs { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 20px; }
+    .kb {
+        background: rgba(255,255,255,0.07);
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 6px;
+        padding: 4px 10px;
+        font-size: 0.62rem;
+        font-family: 'SF Mono','Fira Code',monospace;
+        color: var(--text);
+    }
+
+    /* ── Final CTA ──────────────────────────────────────── */
+    #final-cta {
+        background: var(--bg);
+        text-align: center;
+        border-top: 1px solid var(--border);
+        position: relative;
+        overflow: hidden;
+    }
+    .cta-blob-1 {
+        position: absolute;
+        width: 800px; height: 500px;
+        background: radial-gradient(ellipse,rgba(0,242,255,0.07),transparent 70%);
+        top: 50%; left: 50%;
+        transform: translate(-50%,-50%);
+        filter: blur(50px);
+        pointer-events: none;
+    }
+    .cta-blob-2 {
+        position: absolute;
+        width: 500px; height: 400px;
+        background: radial-gradient(ellipse,rgba(124,58,237,0.06),transparent 70%);
+        bottom: -10%; right: -5%;
+        filter: blur(70px);
+        pointer-events: none;
+    }
+    #final-cta .section-inner { position: relative; z-index: 1; }
+
+    .cta-eyebrow {
+        font-size: 0.62rem;
+        letter-spacing: 2.5px;
+        text-transform: uppercase;
+        color: var(--cyan);
+        opacity: 0.8;
+        margin-bottom: 20px;
+        font-weight: 600;
+    }
+    .cta-headline {
+        font-size: clamp(2.4rem, 6vw, 4.2rem);
+        font-weight: 900;
+        color: #fff;
+        line-height: 1.08;
+        letter-spacing: -1.5px;
+        margin-bottom: 20px;
+    }
+    .cta-sub {
+        font-size: 1.05rem;
+        color: var(--muted);
+        margin-bottom: 44px;
+        max-width: 480px;
+        margin-left: auto;
+        margin-right: auto;
+        line-height: 1.75;
+    }
+
+    /* ── Footer ─────────────────────────────────────────── */
+    footer {
+        border-top: 1px solid var(--border);
+        padding: 30px 48px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 14px;
+    }
+    .footer-brand {
+        font-size: 0.7rem;
+        font-weight: 800;
+        letter-spacing: 4px;
+        text-transform: uppercase;
+        background: linear-gradient(90deg, var(--cyan), var(--purple));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    .footer-links { display: flex; gap: 22px; }
+    .footer-link { font-size: 0.75rem; color: var(--muted); text-decoration: none; transition: color 0.2s; font-weight: 500; }
+    .footer-link:hover { color: var(--text); }
+    .footer-copy { font-size: 0.7rem; color: #374151; }
+
+    /* ── Mobile ─────────────────────────────────────────── */
+    @media (max-width: 768px) {
+        nav { padding: 0 20px; }
+        .nav-link:not(.nav-cta) { display: none; }
+        section { padding: 72px 18px; }
+        #stats { padding: 60px 18px; }
+        .stats-wrap { grid-template-columns: repeat(3, 1fr); border-radius: 14px; }
+        .shapes-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+        footer { padding: 24px 20px; }
+        .hero-logo-mark { width: 100px; height: 100px; }
+        .hero-title { letter-spacing: -1.5px; }
+        #preview-canvas { height: 300px; }
+    }
+    @media (max-width: 480px) {
+        .stats-wrap { grid-template-columns: repeat(2, 1fr); }
+    }
     </style>
 </head>
 <body>
 
-    <!-- ── Nav ─────────────────────────────────────────────── -->
-    <nav>
-        <a href="#" class="nav-logo">
-            <svg class="nav-logo-mark" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="16" cy="16" r="5" fill="#00f2ff" opacity="0.95">
-                    <animate attributeName="opacity" values="0.95;0.5;0.95" dur="2.5s" repeatCount="indefinite"/>
-                </circle>
-                <circle cx="16" cy="16" r="9" fill="#00f2ff" opacity="0.1"/>
-                <circle cx="4" cy="4" r="2.2" fill="#7c3aed" opacity="0.9">
-                    <animateTransform attributeName="transform" type="rotate" from="0 16 16" to="360 16 16" dur="4s" repeatCount="indefinite"/>
-                </circle>
-                <circle cx="28" cy="28" r="1.8" fill="#ec4899" opacity="0.85">
-                    <animateTransform attributeName="transform" type="rotate" from="180 16 16" to="540 16 16" dur="4s" repeatCount="indefinite"/>
-                </circle>
-            </svg>
-            <span class="nav-logo-text">Lumina</span>
-        </a>
-        <div class="nav-links">
-            <a href="#use-cases" class="nav-link">Use Cases</a>
-            <a href="#features" class="nav-link">Features</a>
-            <a href="https://github.com/Harshitgupta5290/3d-showroom" target="_blank" class="nav-link">GitHub ↗</a>
-            <a href="app.html" class="nav-cta">Launch App →</a>
+<!-- ── Nav ──────────────────────────────────────────────── -->
+<nav>
+    <a href="#" class="nav-logo">
+        <svg class="nav-logo-mark" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="16" cy="16" r="5.5" fill="#00f2ff" opacity="0.95">
+                <animate attributeName="opacity" values="0.95;0.5;0.95" dur="2.5s" repeatCount="indefinite"/>
+            </circle>
+            <circle cx="16" cy="16" r="9.5" fill="#00f2ff" opacity="0.1"/>
+            <circle cx="4" cy="4" r="2.4" fill="#7c3aed" opacity="0.9">
+                <animateTransform attributeName="transform" type="rotate" from="0 16 16" to="360 16 16" dur="4s" repeatCount="indefinite"/>
+            </circle>
+            <circle cx="28" cy="28" r="1.9" fill="#ec4899" opacity="0.85">
+                <animateTransform attributeName="transform" type="rotate" from="180 16 16" to="540 16 16" dur="4s" repeatCount="indefinite"/>
+            </circle>
+        </svg>
+        <span class="nav-logo-text">Lumina</span>
+    </a>
+    <div class="nav-links">
+        <a href="#use-cases" class="nav-link">Use Cases</a>
+        <a href="#features" class="nav-link">Features</a>
+        <a href="https://github.com/Harshitgupta5290/3d-showroom" target="_blank" class="nav-link">GitHub ↗</a>
+        <a href="app.html" class="nav-cta">Launch App →</a>
+    </div>
+</nav>
+
+<!-- ── Hero ─────────────────────────────────────────────── -->
+<section id="hero">
+    <canvas id="bg-canvas"></canvas>
+    <div class="aurora aurora-1"></div>
+    <div class="aurora aurora-2"></div>
+    <div class="aurora aurora-3"></div>
+
+    <div class="hero-inner" id="hero-inner">
+        <div class="hero-badge">
+            <div class="hero-badge-dot"></div>
+            WebGL &nbsp;·&nbsp; AI Hand Tracking &nbsp;·&nbsp; UnrealBloom
         </div>
-    </nav>
 
-    <!-- ── Hero ────────────────────────────────────────────── -->
-    <section id="hero">
-        <canvas id="bg-canvas"></canvas>
-        <div class="hero-inner">
-            <div class="hero-badge">
-                <div class="hero-badge-dot"></div>
-                WebGL · AI Hand Tracking · UnrealBloom
-            </div>
+        <svg class="hero-logo-mark" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(0,242,255,0.08)" stroke-width="1"/>
+            <circle cx="50" cy="50" r="28" fill="none" stroke="rgba(124,58,237,0.12)" stroke-width="1"/>
+            <circle cx="50" cy="50" r="15" fill="none" stroke="rgba(236,72,153,0.08)" stroke-width="1"/>
+            <circle cx="50" cy="50" r="10" fill="#00f2ff" opacity="0.92">
+                <animate attributeName="r" values="10;13;10" dur="2.8s" repeatCount="indefinite"/>
+                <animate attributeName="opacity" values="0.92;0.5;0.92" dur="2.8s" repeatCount="indefinite"/>
+            </circle>
+            <circle cx="50" cy="50" r="18" fill="#00f2ff" opacity="0.09">
+                <animate attributeName="r" values="18;24;18" dur="2.8s" repeatCount="indefinite"/>
+            </circle>
+            <!-- Orbit 1: purple, fast -->
+            <circle cx="50" cy="8" r="4.5" fill="#7c3aed" opacity="0.9">
+                <animateTransform attributeName="transform" type="rotate" from="0 50 50" to="360 50 50" dur="3.8s" repeatCount="indefinite"/>
+            </circle>
+            <!-- Orbit 2: pink, medium, opposite -->
+            <circle cx="50" cy="92" r="3.5" fill="#ec4899" opacity="0.85">
+                <animateTransform attributeName="transform" type="rotate" from="180 50 50" to="540 50 50" dur="3.8s" repeatCount="indefinite"/>
+            </circle>
+            <!-- Orbit 3: blue, slow outer -->
+            <circle cx="8" cy="50" r="2.8" fill="#3b82f6" opacity="0.8">
+                <animateTransform attributeName="transform" type="rotate" from="90 50 50" to="450 50 50" dur="6.5s" repeatCount="indefinite"/>
+            </circle>
+            <!-- Orbit 4: green, slow outer opposite -->
+            <circle cx="92" cy="50" r="2.2" fill="#10b981" opacity="0.72">
+                <animateTransform attributeName="transform" type="rotate" from="270 50 50" to="630 50 50" dur="6.5s" repeatCount="indefinite"/>
+            </circle>
+            <!-- Orbit 5: small amber, medium ring -->
+            <circle cx="50" cy="22" r="2" fill="#f59e0b" opacity="0.7">
+                <animateTransform attributeName="transform" type="rotate" from="45 50 50" to="405 50 50" dur="5s" repeatCount="indefinite"/>
+            </circle>
+        </svg>
 
-            <svg class="hero-logo-mark" viewBox="0 0 90 90" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="45" cy="45" r="38" fill="none" stroke="rgba(0,242,255,0.1)" stroke-width="1"/>
-                <circle cx="45" cy="45" r="24" fill="none" stroke="rgba(124,58,237,0.15)" stroke-width="1"/>
-                <circle cx="45" cy="45" r="9" fill="#00f2ff" opacity="0.92">
-                    <animate attributeName="r" values="9;11;9" dur="2.5s" repeatCount="indefinite"/>
-                    <animate attributeName="opacity" values="0.92;0.55;0.92" dur="2.5s" repeatCount="indefinite"/>
-                </circle>
-                <circle cx="45" cy="45" r="16" fill="#00f2ff" opacity="0.1">
-                    <animate attributeName="r" values="16;20;16" dur="2.5s" repeatCount="indefinite"/>
-                </circle>
-                <circle cx="45" cy="7" r="4" fill="#7c3aed" opacity="0.9">
-                    <animateTransform attributeName="transform" type="rotate" from="0 45 45" to="360 45 45" dur="4s" repeatCount="indefinite"/>
-                </circle>
-                <circle cx="45" cy="83" r="3" fill="#ec4899" opacity="0.85">
-                    <animateTransform attributeName="transform" type="rotate" from="180 45 45" to="540 45 45" dur="4s" repeatCount="indefinite"/>
-                </circle>
-                <circle cx="7" cy="45" r="2.5" fill="#3b82f6" opacity="0.8">
-                    <animateTransform attributeName="transform" type="rotate" from="90 45 45" to="450 45 45" dur="6.5s" repeatCount="indefinite"/>
-                </circle>
-                <circle cx="83" cy="45" r="2" fill="#10b981" opacity="0.75">
-                    <animateTransform attributeName="transform" type="rotate" from="270 45 45" to="630 45 45" dur="6.5s" repeatCount="indefinite"/>
-                </circle>
-            </svg>
-
-            <h1 class="hero-title">
-                Particles that<br>respond to <em>you</em>
-            </h1>
-            <p class="hero-sub">
-                LUMINA is a browser-native WebGL particle engine with AI hand tracking,
-                GPU cursor physics, and UnrealBloom. 15,000 particles. Zero install.
-                Built for developers who want to <strong style="color:#e2e8f0">make jaws drop.</strong>
-            </p>
-            <div class="hero-ctas">
-                <a href="app.html" class="btn-launch">
-                    Launch Experience
-                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-                </a>
-                <a href="https://github.com/Harshitgupta5290/3d-showroom" target="_blank" class="btn-ghost">
-                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
-                    View Source
-                </a>
-            </div>
-        </div>
-        <div class="hero-scroll">
-            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
-            Scroll to explore
-        </div>
-    </section>
-
-    <!-- ── Stats ────────────────────────────────────────────── -->
-    <div id="stats">
-        <div class="stats-inner">
-            <div class="stat">
-                <div class="stat-num">15K</div>
-                <div class="stat-lbl">Particles</div>
-            </div>
-            <div class="stat">
-                <div class="stat-num">60</div>
-                <div class="stat-lbl">FPS</div>
-            </div>
-            <div class="stat">
-                <div class="stat-num">9</div>
-                <div class="stat-lbl">Shapes</div>
-            </div>
-            <div class="stat">
-                <div class="stat-num">AI</div>
-                <div class="stat-lbl">Hand Tracking</div>
-            </div>
-            <div class="stat">
-                <div class="stat-num">GPU</div>
-                <div class="stat-lbl">Cursor Physics</div>
-            </div>
-            <div class="stat">
-                <div class="stat-num">0</div>
-                <div class="stat-lbl">Install Required</div>
-            </div>
+        <h1 class="hero-title">
+            Particles that<br>respond to <em>you</em>
+        </h1>
+        <p class="hero-sub">
+            A browser-native WebGL particle engine with AI hand tracking,
+            GPU cursor physics, and UnrealBloom.
+            <strong>15,000 particles. Zero install.</strong>
+            Built for developers who want to <strong>make jaws drop.</strong>
+        </p>
+        <div class="hero-ctas">
+            <a href="app.html" class="btn-launch">
+                Launch Experience
+                <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </a>
+            <a href="https://github.com/Harshitgupta5290/3d-showroom" target="_blank" class="btn-ghost">
+                <svg width="17" height="17" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+                View Source
+            </a>
         </div>
     </div>
 
-    <!-- ── Use Cases ────────────────────────────────────────── -->
-    <section id="use-cases">
-        <div class="section-inner">
-            <span class="section-tag fade-up">Built for professionals</span>
-            <h2 class="section-title fade-up">Where <span>LUMINA</span> fits in<br>the real world</h2>
-            <p class="section-sub fade-up">
-                It's not just a demo. Here's exactly how developers, designers, and
-                tech professionals are using it.
-            </p>
-            <div class="cases-grid">
+    <div class="hero-scroll">
+        <div class="scroll-line"></div>
+        <span class="scroll-txt">Scroll</span>
+    </div>
+</section>
 
-                <div class="case-card fade-up">
-                    <span class="case-icon">🎤</span>
-                    <div class="case-title">Live Tech Talks & Conferences</div>
-                    <div class="case-desc">Run LUMINA fullscreen on the stage display behind your talk. Open your hand — 15,000 particles expand live in front of your audience. Walk on stage and the crowd already knows you're different.</div>
-                    <span class="case-tag">Conference</span>
-                </div>
+<!-- ── Marquee ───────────────────────────────────────────── -->
+<div class="marquee-wrap">
+    <div class="marquee-track">
+        <span class="marquee-item">Three.js r128</span>
+        <span class="marquee-item">Custom GLSL Shaders</span>
+        <span class="marquee-item">UnrealBloom Post-Processing</span>
+        <span class="marquee-item">Google MediaPipe AI</span>
+        <span class="marquee-item">GPU Cursor Physics</span>
+        <span class="marquee-item">Per-Particle HSL Color</span>
+        <span class="marquee-item">15,000 Particles</span>
+        <span class="marquee-item">60 FPS WebGL</span>
+        <span class="marquee-item">Zero Install</span>
+        <span class="marquee-item">Vanilla JavaScript</span>
+        <span class="marquee-item">Scatter-Reform Transitions</span>
+        <span class="marquee-item">9 Mathematical Shapes</span>
+        <!-- duplicate for seamless loop -->
+        <span class="marquee-item">Three.js r128</span>
+        <span class="marquee-item">Custom GLSL Shaders</span>
+        <span class="marquee-item">UnrealBloom Post-Processing</span>
+        <span class="marquee-item">Google MediaPipe AI</span>
+        <span class="marquee-item">GPU Cursor Physics</span>
+        <span class="marquee-item">Per-Particle HSL Color</span>
+        <span class="marquee-item">15,000 Particles</span>
+        <span class="marquee-item">60 FPS WebGL</span>
+        <span class="marquee-item">Zero Install</span>
+        <span class="marquee-item">Vanilla JavaScript</span>
+        <span class="marquee-item">Scatter-Reform Transitions</span>
+        <span class="marquee-item">9 Mathematical Shapes</span>
+    </div>
+</div>
 
-                <div class="case-card fade-up">
-                    <span class="case-icon">💼</span>
-                    <div class="case-title">Client Pitches & Sales Demos</div>
-                    <div class="case-desc">Set the color picker to your client's brand hex. Show them a Heart, their logo color, blooming in real-time. Proves your team can build things clients have never seen before — before you've said a word.</div>
-                    <span class="case-tag">Sales</span>
-                </div>
+<!-- ── Stats ─────────────────────────────────────────────── -->
+<div id="stats">
+    <div class="stats-wrap">
+        <div class="stat">
+            <div class="stat-num" data-count="15" data-suffix="K">15K</div>
+            <div class="stat-lbl">Particles</div>
+        </div>
+        <div class="stat">
+            <div class="stat-num" data-count="60" data-suffix="">60</div>
+            <div class="stat-lbl">FPS Target</div>
+        </div>
+        <div class="stat">
+            <div class="stat-num" data-count="9" data-suffix="">9</div>
+            <div class="stat-lbl">Shapes</div>
+        </div>
+        <div class="stat">
+            <div class="stat-num">AI</div>
+            <div class="stat-lbl">Hand Tracking</div>
+        </div>
+        <div class="stat">
+            <div class="stat-num">GPU</div>
+            <div class="stat-lbl">Cursor Physics</div>
+        </div>
+        <div class="stat">
+            <div class="stat-num" data-count="0" data-suffix="">0</div>
+            <div class="stat-lbl">Install Required</div>
+        </div>
+    </div>
+</div>
 
-                <div class="case-card fade-up">
-                    <span class="case-icon">👨‍💻</span>
-                    <div class="case-title">Developer Portfolio Centrepiece</div>
-                    <div class="case-desc">Deploy in 60 seconds. Instantly demonstrates expertise in WebGL, custom GLSL shaders, post-processing, and AI integration — to any recruiter or client who opens the link.</div>
-                    <span class="case-tag">Portfolio</span>
-                </div>
+<!-- ── Live Preview ──────────────────────────────────────── -->
+<div id="preview">
+    <div class="preview-label fade-up">
+        <span class="section-tag">Live preview</span>
+        <h2 class="section-title" style="margin-bottom:0">See it in action — <span>right here</span></h2>
+        <p style="margin-top:12px;font-size:0.9rem;color:var(--muted)">Move your cursor over the window below. The real app runs at full WebGL quality.</p>
+    </div>
+    <div class="preview-window fade-up">
+        <div class="preview-chrome">
+            <div class="chrome-dots">
+                <span class="chrome-dot cd-r"></span>
+                <span class="chrome-dot cd-y"></span>
+                <span class="chrome-dot cd-g"></span>
+            </div>
+            <div class="chrome-url">3d-showroom-lovat.vercel.app/app.html</div>
+        </div>
+        <canvas id="preview-canvas"></canvas>
+    </div>
+    <p class="preview-hint fade-up">Move cursor to repel · <span>Click Launch App for the real WebGL experience with 15K particles + bloom</span></p>
+</div>
 
-                <div class="case-card fade-up">
-                    <span class="case-icon">🎯</span>
-                    <div class="case-title">Technical Job Interviews</div>
-                    <div class="case-desc">Open LUMINA on your laptop. Walk the interviewer through the UnrealBloom pipeline, the vertex shader cursor physics, the MediaPipe integration. You're not describing what you can do — you're showing it.</div>
-                    <span class="case-tag">Career</span>
-                </div>
-
-                <div class="case-card fade-up">
-                    <span class="case-icon">🚀</span>
-                    <div class="case-title">Product Launch Hero Screens</div>
-                    <div class="case-desc">Embed as an interactive splash or loading screen on your product's site. Visitors play with it while the app loads. It turns wait time into delight — and signals that your product is built by people who care.</div>
-                    <span class="case-tag">Product</span>
-                </div>
-
-                <div class="case-card fade-up">
-                    <span class="case-icon">📚</span>
-                    <div class="case-title">WebGL & Three.js Workshops</div>
-                    <div class="case-desc">Teach GLSL shaders, Three.js, MediaPipe, and real-time post-processing with a live running codebase students can deconstruct line-by-line. One file. No build tools. Open in any browser.</div>
-                    <span class="case-tag">Education</span>
-                </div>
-
+<!-- ── Use Cases ─────────────────────────────────────────── -->
+<section id="use-cases">
+    <div class="section-inner">
+        <span class="section-tag fade-up">Built for professionals</span>
+        <h2 class="section-title fade-up">Where <span>LUMINA</span> fits in<br>the real world</h2>
+        <p class="section-sub fade-up">Not just a demo. Here's exactly how developers and tech professionals use it.</p>
+        <div class="cases-grid">
+            <div class="case-card fade-up">
+                <span class="case-icon">🎤</span>
+                <div class="case-title">Live Tech Talks & Conferences</div>
+                <div class="case-desc">Run LUMINA fullscreen on the stage display behind your talk. Open your hand — 15,000 particles expand live. The crowd knows you're different before you've said a word.</div>
+                <span class="case-tag">Conference</span>
+            </div>
+            <div class="case-card fade-up">
+                <span class="case-icon">💼</span>
+                <div class="case-title">Client Pitches & Sales Demos</div>
+                <div class="case-desc">Set the color picker to your client's brand hex. Show them a Heart blooming in their brand color, real-time. Proves your team builds things clients have never seen — before you say a word.</div>
+                <span class="case-tag">Sales</span>
+            </div>
+            <div class="case-card fade-up">
+                <span class="case-icon">👨‍💻</span>
+                <div class="case-title">Developer Portfolio Centrepiece</div>
+                <div class="case-desc">Deploy in 60 seconds. Instantly signals expertise in WebGL, custom GLSL shaders, real-time post-processing, and AI integration — to any recruiter or client who opens the link.</div>
+                <span class="case-tag">Portfolio</span>
+            </div>
+            <div class="case-card fade-up">
+                <span class="case-icon">🎯</span>
+                <div class="case-title">Technical Job Interviews</div>
+                <div class="case-desc">Open LUMINA. Walk the interviewer through the UnrealBloom pipeline, the vertex shader cursor physics, the MediaPipe integration. You're not describing what you can do — you're showing it.</div>
+                <span class="case-tag">Career</span>
+            </div>
+            <div class="case-card fade-up">
+                <span class="case-icon">🚀</span>
+                <div class="case-title">Product Launch Hero Screens</div>
+                <div class="case-desc">Embed as an interactive splash or loading screen. Visitors play with it while the app loads. Turns wait time into delight — and signals your product is built by people who care about craft.</div>
+                <span class="case-tag">Product</span>
+            </div>
+            <div class="case-card fade-up">
+                <span class="case-icon">📚</span>
+                <div class="case-title">WebGL & Three.js Workshops</div>
+                <div class="case-desc">Teach GLSL shaders, Three.js, MediaPipe, and real-time post-processing with a live running codebase students can deconstruct line-by-line. One file. No build tools. Any browser.</div>
+                <span class="case-tag">Education</span>
             </div>
         </div>
-    </section>
+    </div>
+</section>
 
-    <!-- ── Features ─────────────────────────────────────────── -->
-    <section id="features">
-        <div class="section-inner">
-            <span class="section-tag fade-up">Under the hood</span>
-            <h2 class="section-title fade-up">Technical details that<br>make the <span>difference</span></h2>
-            <p class="section-sub fade-up">
-                Every visual effect is a deliberate engineering choice. Here's what's running.
-            </p>
-            <div class="features-grid">
-
-                <div class="feat-card fade-up">
-                    <div class="feat-icon-wrap" style="background:rgba(0,242,255,0.1)">✨</div>
-                    <div class="feat-title">UnrealBloom Post-Processing</div>
-                    <div class="feat-desc">Three.js EffectComposer with UnrealBloomPass. Particles glow like real neon lights — bright cores with soft halos that spill across the scene. This one pass transforms the entire visual quality.</div>
-                </div>
-
-                <div class="feat-card fade-up">
-                    <div class="feat-icon-wrap" style="background:rgba(124,58,237,0.12)">🖐️</div>
-                    <div class="feat-title">AI Hand Tracking</div>
-                    <div class="feat-desc">Google MediaPipe Hands ML model running entirely in the browser. 21 landmarks per hand at 30fps. No backend, no data leaves the device. Open palm expands. Closed fist contracts. Pinch cycles colors.</div>
-                </div>
-
-                <div class="feat-card fade-up">
-                    <div class="feat-icon-wrap" style="background:rgba(236,72,153,0.1)">⚡</div>
-                    <div class="feat-title">GPU Cursor Physics</div>
-                    <div class="feat-desc">Cursor repulsion and attraction is computed in the GLSL vertex shader — not on the CPU. All 15,000 particles respond to your cursor position with quadratic falloff. Zero JavaScript overhead.</div>
-                </div>
-
-                <div class="feat-card fade-up">
-                    <div class="feat-icon-wrap" style="background:rgba(59,130,246,0.1)">🎨</div>
-                    <div class="feat-title">Per-Particle HSL Variation</div>
-                    <div class="feat-desc">Every particle gets a unique hue, saturation, and lightness offset from the base color. 15,000 particles × individual color = a living, organic cloud that breathes instead of a flat monochrome blob.</div>
-                </div>
-
-                <div class="feat-card fade-up">
-                    <div class="feat-icon-wrap" style="background:rgba(16,185,129,0.1)">🌌</div>
-                    <div class="feat-title">9 Mathematical Shapes</div>
-                    <div class="feat-desc">From the algebraic heart surface equation to Archimedean spiral galaxies, double helices, and vortex cones. Every shape transition scatters particles outward then reforms — cinematic every time.</div>
-                </div>
-
-                <div class="feat-card fade-up">
-                    <div class="feat-icon-wrap" style="background:rgba(245,158,11,0.1)">📁</div>
-                    <div class="feat-title">Single File. Zero Build.</div>
-                    <div class="feat-desc">Everything — HTML, CSS, GLSL shaders, application logic, post-processing — lives in one file. No npm, no webpack, no config. Open in any browser. Deploy in 60 seconds. Sell as a Gumroad product.</div>
-                </div>
-
+<!-- ── Features ──────────────────────────────────────────── -->
+<section id="features">
+    <div class="section-inner">
+        <span class="section-tag fade-up">Under the hood</span>
+        <h2 class="section-title fade-up">Technical choices that<br>make the <span>difference</span></h2>
+        <p class="section-sub fade-up">Every visual effect is a deliberate engineering decision. Here's what's running.</p>
+        <div class="features-grid">
+            <div class="feat-card fade-up" style="--fr:0;--fg:242;--fb:255">
+                <div class="feat-icon-wrap" style="background:rgba(0,242,255,0.1)">✨</div>
+                <div class="feat-title">UnrealBloom Post-Processing</div>
+                <div class="feat-desc">Three.js EffectComposer with UnrealBloomPass. Particles glow like real neon lights — bright cores with soft halos that spill across the scene. One pass transforms the entire visual quality.</div>
+            </div>
+            <div class="feat-card fade-up" style="--fr:124;--fg:58;--fb:237">
+                <div class="feat-icon-wrap" style="background:rgba(124,58,237,0.12)">🖐️</div>
+                <div class="feat-title">AI Hand Tracking</div>
+                <div class="feat-desc">Google MediaPipe Hands ML model running entirely in the browser. 21 landmarks per hand at 30fps. No backend, no data leaves the device. Open palm expands. Closed fist contracts. Pinch cycles colors.</div>
+            </div>
+            <div class="feat-card fade-up" style="--fr:236;--fg:72;--fb:153">
+                <div class="feat-icon-wrap" style="background:rgba(236,72,153,0.1)">⚡</div>
+                <div class="feat-title">GPU Cursor Physics</div>
+                <div class="feat-desc">Cursor repulsion and attraction computed in the GLSL vertex shader — not on the CPU. All 15,000 particles respond with quadratic falloff. Zero JavaScript overhead. Pure GPU.</div>
+            </div>
+            <div class="feat-card fade-up" style="--fr:59;--fg:130;--fb:246">
+                <div class="feat-icon-wrap" style="background:rgba(59,130,246,0.1)">🎨</div>
+                <div class="feat-title">Per-Particle HSL Variation</div>
+                <div class="feat-desc">Every particle gets a unique hue, saturation, and lightness offset from the base color. 15,000 particles × individual color = a living, organic cloud that breathes instead of a flat monochrome blob.</div>
+            </div>
+            <div class="feat-card fade-up" style="--fr:16;--fg:185;--fb:129">
+                <div class="feat-icon-wrap" style="background:rgba(16,185,129,0.1)">🌌</div>
+                <div class="feat-title">9 Mathematical Shapes</div>
+                <div class="feat-desc">From algebraic heart surfaces to Archimedean spiral galaxies, double helices, and vortex cones. Every transition scatters particles outward then reforms — cinematic every single time.</div>
+            </div>
+            <div class="feat-card fade-up" style="--fr:245;--fg:158;--fb:11">
+                <div class="feat-icon-wrap" style="background:rgba(245,158,11,0.1)">📁</div>
+                <div class="feat-title">Single File. Zero Build.</div>
+                <div class="feat-desc">HTML, CSS, GLSL shaders, application logic, post-processing — all in one file. No npm, no webpack, no config. Open in any browser. Deploy in 60 seconds. Sell as a Gumroad product.</div>
             </div>
         </div>
-    </section>
+    </div>
+</section>
 
-    <!-- ── Shapes ────────────────────────────────────────────── -->
-    <section id="shapes">
-        <div class="section-inner">
-            <span class="section-tag fade-up">9 templates</span>
-            <h2 class="section-title fade-up">Every shape is a<br><span>mathematical formula</span></h2>
-            <p class="section-sub fade-up">Switch with a button click or press keys 1–9. Each transition scatters then reforms.</p>
-            <div class="shapes-grid">
-                <div class="shape-card fade-up"><span class="shape-em">💥</span><div class="shape-name">Fireworks</div><div class="shape-hint">Random sphere scatter</div></div>
-                <div class="shape-card fade-up"><span class="shape-em">❤️</span><div class="shape-name">Heart</div><div class="shape-hint">Algebraic surface equation</div></div>
-                <div class="shape-card fade-up"><span class="shape-em">🌸</span><div class="shape-name">Flower</div><div class="shape-hint">Parametric rose curve</div></div>
-                <div class="shape-card fade-up"><span class="shape-em">🪐</span><div class="shape-name">Saturn</div><div class="shape-hint">Planet + ring system</div></div>
-                <div class="shape-card fade-up"><span class="shape-em">🧘</span><div class="shape-name">Buddha</div><div class="shape-hint">Procedural figure</div></div>
-                <div class="shape-card fade-up"><span class="shape-em">🌌</span><div class="shape-name">Nebula</div><div class="shape-hint">3-arm spiral galaxy</div></div>
-                <div class="shape-card fade-up"><span class="shape-em">🧬</span><div class="shape-name">DNA</div><div class="shape-hint">Double helix, π offset</div></div>
-                <div class="shape-card fade-up"><span class="shape-em">🌪️</span><div class="shape-name">Vortex</div><div class="shape-hint">Expanding spiral cone</div></div>
-                <div class="shape-card fade-up"><span class="shape-em">⭐</span><div class="shape-name">Star</div><div class="shape-hint">8-arm starburst</div></div>
+<!-- ── Shapes ─────────────────────────────────────────────── -->
+<section id="shapes">
+    <div class="section-inner">
+        <span class="section-tag fade-up">9 templates</span>
+        <h2 class="section-title fade-up">Every shape is a<br><span>mathematical formula</span></h2>
+        <p class="section-sub fade-up">Press keys 1–9 or click a button. Each transition scatters then reforms with a cinematic explosion.</p>
+        <div class="shapes-grid">
+            <div class="shape-card fade-up"><div class="shape-key">KEY 1</div><span class="shape-em">💥</span><div class="shape-name">Fireworks</div><div class="shape-hint">Random sphere scatter</div></div>
+            <div class="shape-card fade-up"><div class="shape-key">KEY 2</div><span class="shape-em">❤️</span><div class="shape-name">Heart</div><div class="shape-hint">Algebraic surface equation</div></div>
+            <div class="shape-card fade-up"><div class="shape-key">KEY 3</div><span class="shape-em">🌸</span><div class="shape-name">Flower</div><div class="shape-hint">Parametric rose curve</div></div>
+            <div class="shape-card fade-up"><div class="shape-key">KEY 4</div><span class="shape-em">🪐</span><div class="shape-name">Saturn</div><div class="shape-hint">Planet + ring system</div></div>
+            <div class="shape-card fade-up"><div class="shape-key">KEY 5</div><span class="shape-em">🧘</span><div class="shape-name">Buddha</div><div class="shape-hint">Procedural seated figure</div></div>
+            <div class="shape-card fade-up"><div class="shape-key">KEY 6</div><span class="shape-em">🌌</span><div class="shape-name">Nebula</div><div class="shape-hint">3-arm spiral galaxy</div></div>
+            <div class="shape-card fade-up"><div class="shape-key">KEY 7</div><span class="shape-em">🧬</span><div class="shape-name">DNA</div><div class="shape-hint">Double helix, π offset</div></div>
+            <div class="shape-card fade-up"><div class="shape-key">KEY 8</div><span class="shape-em">🌪️</span><div class="shape-name">Vortex</div><div class="shape-hint">Expanding spiral cone</div></div>
+            <div class="shape-card fade-up"><div class="shape-key">KEY 9</div><span class="shape-em">⭐</span><div class="shape-name">Star</div><div class="shape-hint">8-arm starburst</div></div>
+        </div>
+    </div>
+</section>
+
+<!-- ── Interaction ────────────────────────────────────────── -->
+<section id="interact">
+    <div class="section-inner">
+        <span class="section-tag fade-up">Three ways to play</span>
+        <h2 class="section-title fade-up">Works the way<br><span>you work</span></h2>
+        <p class="section-sub fade-up">Camera optional. Mouse and touch are first-class citizens.</p>
+        <div class="interact-grid">
+            <div class="interact-card ic-cyan fade-up">
+                <span class="interact-icon">🖱️</span>
+                <div class="interact-title">Cursor Control</div>
+                <div class="interact-desc">Move your cursor and 15,000 particles flee it — GPU-accelerated repulsion with quadratic falloff. Click and hold to flip to attraction mode: particles rush toward you.</div>
+                <div class="interact-kbs">
+                    <span class="kb">Move → Repel</span>
+                    <span class="kb">Click → Attract</span>
+                    <span class="kb">1–9 shapes</span>
+                    <span class="kb">S screenshot</span>
+                    <span class="kb">F fullscreen</span>
+                </div>
+            </div>
+            <div class="interact-card ic-purple fade-up">
+                <span class="interact-icon">🖐️</span>
+                <div class="interact-title">AI Hand Tracking</div>
+                <div class="interact-desc">Enable your webcam and LUMINA reads your hand using MediaPipe's ML model. Open palm expands the cloud. Close your fist to contract it. Pinch to cycle through 9 color presets.</div>
+                <div class="interact-kbs">
+                    <span class="kb">Open Palm → Expand</span>
+                    <span class="kb">Closed Fist → Contract</span>
+                    <span class="kb">Pinch → Color</span>
+                </div>
+            </div>
+            <div class="interact-card ic-pink fade-up">
+                <span class="interact-icon">📱</span>
+                <div class="interact-title">Touch & Mobile</div>
+                <div class="interact-desc">Full touch support on mobile and tablet. Drag to repel, tap-hold to attract. Pinch-to-zoom orbits the 3D scene. Works in mobile Chrome and Safari at 60fps.</div>
+                <div class="interact-kbs">
+                    <span class="kb">Drag → Repel</span>
+                    <span class="kb">Hold → Attract</span>
+                    <span class="kb">Pinch-zoom → Orbit</span>
+                </div>
             </div>
         </div>
-    </section>
+    </div>
+</section>
 
-    <!-- ── Interaction modes ─────────────────────────────────── -->
-    <section id="interact">
-        <div class="section-inner">
-            <span class="section-tag fade-up">Three ways to play</span>
-            <h2 class="section-title fade-up">Works the way<br><span>you work</span></h2>
-            <p class="section-sub fade-up">Camera optional. Mouse and touch are first-class citizens.</p>
-            <div class="interact-grid">
-
-                <div class="interact-card ic-cyan fade-up">
-                    <span class="interact-icon">🖱️</span>
-                    <div class="interact-title">Cursor Control</div>
-                    <div class="interact-desc">
-                        Move your cursor and 15,000 particles flee it in real-time — GPU-accelerated repulsion with quadratic falloff. Click and hold to flip to attraction mode: particles rush toward your cursor.
-                    </div>
-                    <div class="interact-kbs">
-                        <span class="kb">Move → Repel</span>
-                        <span class="kb">Click → Attract</span>
-                        <span class="kb">1–9 shapes</span>
-                        <span class="kb">S screenshot</span>
-                        <span class="kb">F fullscreen</span>
-                    </div>
-                </div>
-
-                <div class="interact-card ic-purple fade-up">
-                    <span class="interact-icon">🖐️</span>
-                    <div class="interact-title">AI Hand Tracking</div>
-                    <div class="interact-desc">
-                        Enable your webcam and LUMINA reads your hand in real-time using MediaPipe's ML model. Open your palm — cloud expands. Close your fist — it contracts. Pinch to cycle through 9 color presets.
-                    </div>
-                    <div class="interact-kbs">
-                        <span class="kb">Open Palm → Expand</span>
-                        <span class="kb">Closed Fist → Contract</span>
-                        <span class="kb">Pinch → Color</span>
-                    </div>
-                </div>
-
-                <div class="interact-card ic-pink fade-up">
-                    <span class="interact-icon">📱</span>
-                    <div class="interact-title">Touch & Mobile</div>
-                    <div class="interact-desc">
-                        Full touch support on mobile and tablet. Drag your finger to repel particles, tap and hold to attract. Pinch-to-zoom orbits the 3D scene. Works in mobile Chrome and Safari at 60fps.
-                    </div>
-                    <div class="interact-kbs">
-                        <span class="kb">Drag → Repel</span>
-                        <span class="kb">Hold → Attract</span>
-                        <span class="kb">Pinch-zoom → Orbit</span>
-                    </div>
-                </div>
-
-            </div>
+<!-- ── Final CTA ──────────────────────────────────────────── -->
+<section id="final-cta">
+    <div class="cta-blob-1"></div>
+    <div class="cta-blob-2"></div>
+    <div class="section-inner" style="padding:20px 0">
+        <p class="cta-eyebrow fade-up">Ready?</p>
+        <h2 class="cta-headline fade-up">Experience it live.<br>No signup. No install.</h2>
+        <p class="cta-sub fade-up">Open it, show your hand, or just move your cursor. Either way, something clicks.</p>
+        <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap" class="fade-up">
+            <a href="app.html" class="btn-launch">
+                Launch LUMINA
+                <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </a>
+            <a href="https://github.com/Harshitgupta5290/3d-showroom" target="_blank" class="btn-ghost">
+                <svg width="17" height="17" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+                Source Code
+            </a>
         </div>
-    </section>
+    </div>
+</section>
 
-    <!-- ── Final CTA ─────────────────────────────────────────── -->
-    <section id="final-cta">
-        <div class="cta-glow"></div>
-        <div class="section-inner" style="text-align:center; padding: 20px 0;">
-            <p class="cta-eyebrow fade-up">Ready?</p>
-            <h2 class="cta-headline fade-up">Experience it live.<br>No signup. No install.</h2>
-            <p class="cta-sub fade-up">Open it, grant camera access, show your hand. Or just move your cursor. Either way, something clicks.</p>
-            <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;" class="fade-up">
-                <a href="app.html" class="btn-launch">
-                    Launch LUMINA
-                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-                </a>
-                <a href="https://github.com/Harshitgupta5290/3d-showroom" target="_blank" class="btn-ghost">
-                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
-                    Source Code
-                </a>
-            </div>
-        </div>
-    </section>
+<!-- ── Footer ────────────────────────────────────────────── -->
+<footer>
+    <span class="footer-brand">Lumina</span>
+    <div class="footer-links">
+        <a href="app.html" class="footer-link">Launch App</a>
+        <a href="https://github.com/Harshitgupta5290/3d-showroom" target="_blank" class="footer-link">GitHub</a>
+        <a href="https://github.com/Harshitgupta5290/3d-showroom/blob/main/LICENSE" target="_blank" class="footer-link">MIT License</a>
+    </div>
+    <span class="footer-copy">Built by Harshit Gupta · Three.js + MediaPipe + WebGL</span>
+</footer>
 
-    <!-- ── Footer ────────────────────────────────────────────── -->
-    <footer>
-        <span class="footer-brand">Lumina</span>
-        <div class="footer-links">
-            <a href="app.html" class="footer-link">Launch App</a>
-            <a href="https://github.com/Harshitgupta5290/3d-showroom" target="_blank" class="footer-link">GitHub</a>
-            <a href="https://github.com/Harshitgupta5290/3d-showroom/blob/main/LICENSE" target="_blank" class="footer-link">MIT License</a>
-        </div>
-        <span class="footer-copy">Built by Harshit Gupta · Three.js + MediaPipe + WebGL</span>
-    </footer>
+<script>
+/* ═══════════════════════════════════════════════════════════
+   HERO CANVAS — full-hero glowing particle field
+   Fixes: uses window.innerWidth/Height to cover full hero
+═══════════════════════════════════════════════════════════ */
+(function () {
+    const canvas = document.getElementById('bg-canvas');
+    const ctx    = canvas.getContext('2d');
+    let W, H, mx = window.innerWidth / 2, my = window.innerHeight / 2;
+    let pts = [];
+    const NUM = 320;
+    const HUES = [186, 267, 330, 220, 160, 200, 290];
 
-    <script>
-    // ── Hero background: lightweight 2D canvas particles ──────
-    (function() {
-        const canvas = document.getElementById('bg-canvas');
-        const ctx    = canvas.getContext('2d');
-        let W, H;
+    function resize() {
+        W = canvas.width  = window.innerWidth;
+        H = canvas.height = window.innerHeight;
+        initPts();
+    }
 
-        function resize() {
-            W = canvas.width  = canvas.offsetWidth;
-            H = canvas.height = canvas.offsetHeight;
-        }
-
-        resize();
-        window.addEventListener('resize', resize);
-
-        const HUES = [186, 267, 330, 220, 160];  // cyan, purple, pink, blue, green
-        const pts  = Array.from({length: 140}, () => ({
+    function initPts() {
+        pts = Array.from({ length: NUM }, () => ({
             x:   Math.random() * W,
             y:   Math.random() * H,
-            vx:  (Math.random() - 0.5) * 0.35,
-            vy:  (Math.random() - 0.5) * 0.35,
-            r:   Math.random() * 1.4 + 0.4,
+            vx:  (Math.random() - 0.5) * 0.28,
+            vy:  (Math.random() - 0.5) * 0.28,
+            r:   Math.random() * 1.6 + 0.5,
             hue: HUES[Math.floor(Math.random() * HUES.length)],
-            a:   Math.random() * 0.5 + 0.25
+            a:   Math.random() * 0.45 + 0.25,
+            ph:  Math.random() * Math.PI * 2
         }));
+    }
 
-        // Faint connection lines between nearby particles
-        function drawLines() {
-            for (let i = 0; i < pts.length; i++) {
-                for (let j = i + 1; j < pts.length; j++) {
-                    const dx = pts[i].x - pts[j].x;
-                    const dy = pts[i].y - pts[j].y;
-                    const d  = Math.sqrt(dx*dx + dy*dy);
-                    if (d < 90) {
-                        ctx.beginPath();
-                        ctx.moveTo(pts[i].x, pts[i].y);
-                        ctx.lineTo(pts[j].x, pts[j].y);
-                        ctx.strokeStyle = `rgba(0,242,255,${(1 - d/90) * 0.06})`;
-                        ctx.lineWidth = 0.5;
-                        ctx.stroke();
-                    }
+    window.addEventListener('resize', resize);
+    window.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
+    resize();
+
+    let t = 0;
+
+    function frame() {
+        t += 0.0018;
+        ctx.fillStyle = 'rgba(2,4,8,0.14)';
+        ctx.fillRect(0, 0, W, H);
+
+        /* connection lines */
+        for (let i = 0; i < pts.length; i++) {
+            for (let j = i + 1; j < pts.length; j++) {
+                const dx = pts[i].x - pts[j].x, dy = pts[i].y - pts[j].y;
+                const d  = Math.sqrt(dx * dx + dy * dy);
+                if (d < 85) {
+                    ctx.beginPath();
+                    ctx.moveTo(pts[i].x, pts[i].y);
+                    ctx.lineTo(pts[j].x, pts[j].y);
+                    ctx.strokeStyle = `rgba(0,242,255,${(1 - d / 85) * 0.07})`;
+                    ctx.lineWidth   = 0.5;
+                    ctx.stroke();
                 }
             }
         }
 
-        function frame() {
-            ctx.fillStyle = 'rgba(2,4,8,0.18)';
-            ctx.fillRect(0, 0, W, H);
+        /* particles */
+        pts.forEach(p => {
+            /* mouse repulsion */
+            const dx = p.x - mx, dy = p.y - my;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < 130 && dist > 0) {
+                const f = (1 - dist / 130) * 0.75;
+                p.vx += (dx / dist) * f;
+                p.vy += (dy / dist) * f;
+            }
 
-            drawLines();
+            /* idle noise */
+            p.vx += Math.sin(t + p.ph) * 0.004;
+            p.vy += Math.cos(t + p.ph * 1.3) * 0.004;
 
-            pts.forEach(p => {
-                p.x = (p.x + p.vx + W) % W;
-                p.y = (p.y + p.vy + H) % H;
+            /* speed cap + friction */
+            const spd = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
+            if (spd > 1.4) { p.vx *= 1.4 / spd; p.vy *= 1.4 / spd; }
+            p.vx *= 0.982; p.vy *= 0.982;
 
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-                ctx.fillStyle   = `hsla(${p.hue},100%,65%,${p.a})`;
-                ctx.shadowBlur  = 8;
-                ctx.shadowColor = `hsla(${p.hue},100%,65%,0.6)`;
-                ctx.fill();
-                ctx.shadowBlur  = 0;
-            });
+            p.x = (p.x + p.vx + W) % W;
+            p.y = (p.y + p.vy + H) % H;
 
-            requestAnimationFrame(frame);
-        }
+            ctx.save();
+            ctx.shadowBlur  = 14;
+            ctx.shadowColor = `hsla(${p.hue},100%,65%,0.75)`;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+            ctx.fillStyle = `hsla(${p.hue},100%,65%,${p.a})`;
+            ctx.fill();
+            ctx.restore();
+        });
 
-        frame();
-    })();
+        requestAnimationFrame(frame);
+    }
 
-    // ── Scroll fade-in ────────────────────────────────────────
-    const observer = new IntersectionObserver(entries => {
+    frame();
+})();
+
+/* ═══════════════════════════════════════════════════════════
+   PREVIEW CANVAS — browser-window mini particle sim
+═══════════════════════════════════════════════════════════ */
+(function () {
+    const canvas = document.getElementById('preview-canvas');
+    const ctx    = canvas.getContext('2d');
+    let W, H, mx = -999, my = -999;
+
+    function resize() {
+        const rect = canvas.getBoundingClientRect();
+        W = canvas.width  = rect.width  || canvas.offsetWidth  || 960;
+        H = canvas.height = rect.height || canvas.offsetHeight || 460;
+        buildNebula();
+    }
+
+    const NUM = 1800;
+    const HUES = [186, 267, 330, 220, 160];
+    let pts = [];
+
+    function buildNebula() {
+        pts = Array.from({ length: NUM }, (_, i) => {
+            /* nebula spiral arrangement */
+            const arm   = i % 3;
+            const t     = (i / NUM) * Math.PI * 8;
+            const r     = (t / (Math.PI * 8)) * Math.min(W, H) * 0.38 + Math.random() * 22 - 11;
+            const angle = t + (arm * Math.PI * 2 / 3) + (Math.random() - 0.5) * 0.4;
+            return {
+                x:    W / 2 + Math.cos(angle) * r,
+                y:    H / 2 + Math.sin(angle) * r * 0.55,
+                ox:   W / 2 + Math.cos(angle) * r,
+                oy:   H / 2 + Math.sin(angle) * r * 0.55,
+                vx: 0, vy: 0,
+                r:   Math.random() * 1.4 + 0.5,
+                hue: HUES[Math.floor(Math.random() * HUES.length)],
+                a:   Math.random() * 0.5 + 0.3,
+                ph:  Math.random() * Math.PI * 2
+            };
+        });
+    }
+
+    canvas.addEventListener('mousemove', e => {
+        const rect = canvas.getBoundingClientRect();
+        mx = e.clientX - rect.left;
+        my = e.clientY - rect.top;
+    });
+    canvas.addEventListener('mouseleave', () => { mx = -999; my = -999; });
+
+    window.addEventListener('resize', () => setTimeout(resize, 100));
+    setTimeout(resize, 50);
+
+    let t = 0;
+    function frame() {
+        t += 0.001;
+        ctx.fillStyle = 'rgba(2,4,8,0.22)';
+        ctx.fillRect(0, 0, W, H);
+
+        pts.forEach(p => {
+            /* spring back to origin */
+            p.vx += (p.ox - p.x) * 0.006;
+            p.vy += (p.oy - p.y) * 0.006;
+
+            /* cursor repulsion */
+            const dx = p.x - mx, dy = p.y - my;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < 90 && dist > 0) {
+                const f = (1 - dist / 90) * 1.2;
+                p.vx += (dx / dist) * f;
+                p.vy += (dy / dist) * f;
+            }
+
+            /* idle oscillation */
+            p.vx += Math.sin(t * 0.7 + p.ph) * 0.003;
+            p.vy += Math.cos(t * 0.7 + p.ph) * 0.003;
+
+            p.vx *= 0.88; p.vy *= 0.88;
+            p.x += p.vx; p.y += p.vy;
+
+            ctx.save();
+            ctx.shadowBlur  = 12;
+            ctx.shadowColor = `hsla(${p.hue},100%,65%,0.8)`;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+            ctx.fillStyle = `hsla(${p.hue},100%,65%,${p.a})`;
+            ctx.fill();
+            ctx.restore();
+        });
+
+        requestAnimationFrame(frame);
+    }
+
+    frame();
+})();
+
+/* ═══════════════════════════════════════════════════════════
+   HERO PARALLAX — subtle mouse-driven depth effect
+═══════════════════════════════════════════════════════════ */
+(function () {
+    const inner = document.getElementById('hero-inner');
+    let tx = 0, ty = 0, cx = 0, cy = 0;
+
+    document.addEventListener('mousemove', e => {
+        tx = (e.clientX / window.innerWidth  - 0.5) * 14;
+        ty = (e.clientY / window.innerHeight - 0.5) *  8;
+    });
+
+    function loop() {
+        cx += (tx - cx) * 0.055;
+        cy += (ty - cy) * 0.055;
+        inner.style.transform = `translate(${cx.toFixed(2)}px, ${cy.toFixed(2)}px)`;
+        requestAnimationFrame(loop);
+    }
+    loop();
+})();
+
+/* ═══════════════════════════════════════════════════════════
+   COUNT-UP ANIMATION for stats
+═══════════════════════════════════════════════════════════ */
+(function () {
+    const els = document.querySelectorAll('[data-count]');
+    const obs = new IntersectionObserver(entries => {
         entries.forEach(e => {
+            if (!e.isIntersecting) return;
+            obs.unobserve(e.target);
+            const el     = e.target;
+            const target = parseInt(el.dataset.count, 10);
+            const suffix = el.dataset.suffix || '';
+            const dur    = 1600;
+            const start  = performance.now();
+            function update(now) {
+                const p = Math.min((now - start) / dur, 1);
+                const v = 1 - Math.pow(1 - p, 3);
+                el.textContent = Math.round(target * v) + suffix;
+                if (p < 1) requestAnimationFrame(update);
+            }
+            requestAnimationFrame(update);
+        });
+    }, { threshold: 0.5 });
+
+    els.forEach(el => obs.observe(el));
+})();
+
+/* ═══════════════════════════════════════════════════════════
+   SCROLL FADE-IN
+═══════════════════════════════════════════════════════════ */
+(function () {
+    const observer = new IntersectionObserver(entries => {
+        entries.forEach((e, i) => {
             if (e.isIntersecting) {
                 e.target.classList.add('in');
                 observer.unobserve(e.target);
             }
         });
-    }, { threshold: 0.12 });
+    }, { threshold: 0.1 });
 
     document.querySelectorAll('.fade-up').forEach((el, i) => {
-        el.style.transitionDelay = (i % 4) * 80 + 'ms';
+        el.style.transitionDelay = (i % 5) * 75 + 'ms';
         observer.observe(el);
     });
-    </script>
+})();
+</script>
 </body>
 </html>

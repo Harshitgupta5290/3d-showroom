@@ -146,14 +146,15 @@ const CFG = {
 ## 📁 What's Included
 
 ```
-nova/
-├── index.html      # Complete app — HTML + CSS + GLSL + JS (~1,300 lines)
+lumina/
+├── index.html      # Landing page — marketing, use cases, live preview
+├── app.html        # Particle engine — HTML + CSS + GLSL + JS (~1,700 lines)
 ├── vercel.json     # Vercel deployment config (camera permissions header)
 ├── LICENSE         # MIT License
 └── README.md
 ```
 
-Single file. No build step. No npm. No server required (beyond a basic HTTP server for camera).
+Two files. No build step. No npm. No server required (beyond a basic HTTP server for camera).
 
 ---
 
