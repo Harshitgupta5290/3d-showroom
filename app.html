@@ -829,7 +829,7 @@
             <div class="j-response" id="j-response"></div>
         </div>
         <div class="j-input-row">
-            <input type="text" id="j-text-input" placeholder="Ask anything…" autocomplete="off" spellcheck="false">
+            <input type="text" id="j-text-input" placeholder="Ask anything, or say 'make a butterfly'…" autocomplete="off" spellcheck="false">
             <button id="j-mic-btn" title="Click to speak">🎤</button>
             <button id="j-send-btn" title="Send (Enter)">→</button>
             <button id="j-exit-btn" title="Exit JARVIS (J)">✕</button>
@@ -956,7 +956,7 @@
 
     </div>
 
-    <div id="hint">Move cursor · Click &amp; hold to attract · 1–9 shapes · H hide · S save · F fullscreen</div>
+    <div id="hint">Move cursor · Click &amp; hold to attract · 1–9 shapes · J JARVIS AI · H hide · S save · F fullscreen</div>
     <div id="toast"></div>
 
     <!-- ── Three.js + Post-processing ────────────────────────── -->
@@ -2047,14 +2047,24 @@
 
     /* ── Query → Gemini → TTS ───────────────────────────────── */
 
+    // Detect if the query is a shape-generation request
+    const SHAPE_TRIGGER = /^(make|create|generate|show|draw|build|form|morph|give me|i want|can you make|become)\b/i;
+
     async function processJarvisQuery(text) {
         if (!text) return;
         document.getElementById('j-transcript').innerHTML = `<strong>${text}</strong>`;
         document.getElementById('j-response').textContent = '';
-        setJarvisState('thinking');
-        morphToText('THINKING');
 
         const key = localStorage.getItem('lumina-jarvis-key');
+
+        // Route: shape generation vs Q&A
+        if (SHAPE_TRIGGER.test(text.trim())) {
+            await generateAIShape(text, key);
+            return;
+        }
+
+        setJarvisState('thinking');
+        morphToText('THINKING');
 
         if (!key || jarvisNoAI) {
             await jarvisSay(`You said: "${text}". No AI key set — I am in echo mode.`);
@@ -2072,6 +2082,163 @@
             setTimeout(() => { if (jarvisActive) morphToText('LUMINA'); }, 2200);
             toast('API error — check key');
         }
+    }
+
+    /* ── AI Shape Generator ─────────────────────────────────────
+       Sends shape description to Gemini, gets back a JS function
+       body, executes it safely, morphs 15K particles into result.
+    ───────────────────────────────────────────────────────────── */
+
+    let lastCustomShapeCode = null;
+
+    async function generateAIShape(description, apiKey) {
+        setJarvisState('thinking');
+        morphToText('CREATING');
+        document.getElementById('j-response').textContent = '';
+
+        if (!apiKey || jarvisNoAI) {
+            document.getElementById('j-response').textContent = 'Add a Gemini API key to generate custom shapes.';
+            await jarvisSay('I need an AI key to generate shapes. Tap API key to add one.');
+            return;
+        }
+
+        try {
+            const code = await callGeminiShape(description, apiKey);
+            const shapePointFn = compileShapeCode(code);
+
+            if (!shapePointFn) throw new Error('Generated code did not return {x,y,z}');
+
+            lastCustomShapeCode = code;
+
+            // Test it once before committing
+            const test = shapePointFn();
+            if (typeof test.x !== 'number') throw new Error('Shape returned invalid coords');
+
+            // Apply: scatter → reform into AI-generated shape
+            isMorphing = true;
+            const saved = CFG.lerpSpeed;
+            CFG.lerpSpeed = 0.14;
+
+            for (let i = 0; i < CFG.count; i++) {
+                const p = randSphere(24 + Math.random()*8);
+                targetPos[i*3]=p.x; targetPos[i*3+1]=p.y; targetPos[i*3+2]=p.z;
+            }
+
+            setTimeout(() => {
+                for (let i = 0; i < CFG.count; i++) {
+                    try {
+                        const p = shapePointFn();
+                        targetPos[i*3]  = isFinite(p.x) ? p.x : 0;
+                        targetPos[i*3+1]= isFinite(p.y) ? p.y : 0;
+                        targetPos[i*3+2]= isFinite(p.z) ? p.z : 0;
+                    } catch(e) {
+                        const p = randSphere(12);
+                        targetPos[i*3]=p.x; targetPos[i*3+1]=p.y; targetPos[i*3+2]=p.z;
+                    }
+                }
+                CFG.lerpSpeed = saved;
+                isJarvisText  = false;   // particles now form the 3D shape
+                setTimeout(() => { isMorphing = false; }, 700);
+            }, 360);
+
+            // Update shape panel with custom slot
+            addCustomShapeButton(description);
+
+            const shortDesc = description.replace(SHAPE_TRIGGER, '').trim();
+            const reply = `Creating "${shortDesc}" for you now.`;
+            document.getElementById('j-response').textContent = reply;
+            await jarvisSay(reply);
+
+        } catch(err) {
+            setJarvisState('idle');
+            morphToText('ERROR');
+            document.getElementById('j-response').textContent = 'Shape generation failed: ' + err.message;
+            setTimeout(() => { if (jarvisActive) morphToText('LUMINA'); }, 2000);
+            toast('Shape gen failed — try again');
+            console.warn('Shape generation error:', err);
+        }
+    }
+
+    async function callGeminiShape(description, apiKey) {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+
+        const systemPrompt = `You are an expert Three.js particle mathematician.
+Generate a JavaScript function BODY (not a full function — just the body) that computes ONE random point on or inside a 3D shape described as: "${description}"
+
+STRICT RULES:
+- Use ONLY: Math.random() Math.sin() Math.cos() Math.PI Math.sqrt() Math.abs() Math.pow() Math.cbrt() Math.floor() Math.acos() Math.atan2() const let if for while return
+- All coordinates must be finite numbers roughly in range -22 to 22
+- Must end with: return { x: <number>, y: <number>, z: <number> };
+- No imports, no external variables, no comments, no markdown, no explanation
+- ONLY the raw function body — nothing else
+
+Example (torus):
+const R=9, r=3;
+const u=Math.random()*Math.PI*2, v=Math.random()*Math.PI*2;
+return { x:(R+r*Math.cos(v))*Math.cos(u), y:r*Math.sin(v), z:(R+r*Math.cos(v))*Math.sin(u) };`;
+
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{ parts: [{ text: systemPrompt }] }],
+                generationConfig: { maxOutputTokens: 300, temperature: 0.3 }
+            })
+        });
+
+        if (!res.ok) {
+            const e = await res.json().catch(()=>({}));
+            throw new Error((e.error && e.error.message) || `HTTP ${res.status}`);
+        }
+        const d = await res.json();
+        let raw = d.candidates[0].content.parts[0].text.trim();
+
+        // Strip any markdown code fences if model added them
+        raw = raw.replace(/^```[\w]*\n?/,'').replace(/\n?```$/,'').trim();
+        return raw;
+    }
+
+    function compileShapeCode(code) {
+        try {
+            // new Function() creates an isolated function from the body string
+            const fn = new Function(`"use strict"; ${code}`);
+            return fn;
+        } catch(e) {
+            console.warn('Shape code compile error:', e.message, '\nCode:', code);
+            return null;
+        }
+    }
+
+    function addCustomShapeButton(description) {
+        const grid = document.getElementById('shape-grid');
+        // Remove any previous custom button
+        const prev = grid.querySelector('[data-shape="custom"]');
+        if (prev) prev.remove();
+
+        const btn = document.createElement('button');
+        btn.className  = 'sb on';
+        btn.dataset.shape = 'custom';
+        const label = description.replace(SHAPE_TRIGGER,'').trim().slice(0,12) || 'Custom';
+        btn.innerHTML  = `<span class="sb-ic">🤖</span>${label}`;
+        btn.title      = description;
+        btn.addEventListener('click', () => {
+            if (!lastCustomShapeCode) return;
+            document.querySelectorAll('.sb').forEach(b => b.classList.remove('on'));
+            btn.classList.add('on');
+            const fn = compileShapeCode(lastCustomShapeCode);
+            if (!fn) return;
+            isMorphing = true;
+            const saved = CFG.lerpSpeed; CFG.lerpSpeed = 0.14;
+            for (let i=0;i<CFG.count;i++){const p=randSphere(24+Math.random()*8);targetPos[i*3]=p.x;targetPos[i*3+1]=p.y;targetPos[i*3+2]=p.z;}
+            setTimeout(()=>{
+                for(let i=0;i<CFG.count;i++){try{const p=fn();targetPos[i*3]=isFinite(p.x)?p.x:0;targetPos[i*3+1]=isFinite(p.y)?p.y:0;targetPos[i*3+2]=isFinite(p.z)?p.z:0;}catch(e){const p=randSphere(12);targetPos[i*3]=p.x;targetPos[i*3+1]=p.y;targetPos[i*3+2]=p.z;}}
+                CFG.lerpSpeed=saved; setTimeout(()=>{isMorphing=false;},700);
+            },360);
+        });
+
+        // Deselect other shape buttons
+        document.querySelectorAll('.sb').forEach(b => b.classList.remove('on'));
+        grid.appendChild(btn);
     }
 
     async function callGemini(prompt, apiKey) {
