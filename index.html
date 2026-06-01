@@ -4,117 +4,311 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D Hand-Reactive Particles</title>
+    <title>Flux Particles — 3D Hand-Reactive Particle System</title>
+
+    <!-- SEO -->
+    <meta name="description" content="Real-time 3D particle system that reacts to your hand gestures via webcam. 15,000 particles morph into Hearts, Nebulae, Saturn rings, and more. Runs entirely in the browser.">
+    <meta name="keywords" content="3D particles, hand tracking, MediaPipe, Three.js, WebGL, interactive, gesture, webcam">
+    <meta name="author" content="Harshit Gupta">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Flux Particles — 3D Hand-Reactive Particle System">
+    <meta property="og:description" content="Real-time 3D particle system that reacts to your hand gestures via webcam. 15,000 particles, 9 templates, zero install.">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Flux Particles — 3D Hand-Reactive Particle System">
+    <meta name="twitter:description" content="Open your hand → particles expand. Close your fist → they contract. Built with Three.js & MediaPipe.">
+
     <style>
         :root {
             --primary: #00f2ff;
-            --bg-overlay: rgba(15, 23, 42, 0.85);
+            --bg: rgba(8, 14, 28, 0.9);
             --text: #e2e8f0;
-            --font-stack: system-ui, -apple-system, sans-serif;
+            --muted: #64748b;
+            --subtle: rgba(255, 255, 255, 0.06);
+            --border: rgba(255, 255, 255, 0.09);
+            --font: system-ui, -apple-system, sans-serif;
+            --radius: 10px;
+            --panel-w: 268px;
         }
+
+        * { box-sizing: border-box; }
 
         body {
             margin: 0;
             overflow: hidden;
-            background-color: #050505;
-            font-family: var(--font-stack);
+            background: #030509;
+            font-family: var(--font);
             color: var(--text);
             user-select: none;
         }
 
         #canvas-container {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
+            position: fixed;
+            inset: 0;
             z-index: 1;
         }
 
-        /* Video hidden, used for MediaPipe processing */
-        #input-video {
-            display: none;
+        #input-video { display: none; }
+
+        /* ── Loader ─────────────────────────────────── */
+        #loader {
+            position: fixed;
+            inset: 0;
+            background: #030509;
+            z-index: 300;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 18px;
+            transition: opacity 0.7s ease;
         }
 
-        /* UI Overlay */
-        #ui-layer {
-            position: absolute;
+        .loader-ring {
+            width: 48px;
+            height: 48px;
+            border: 2px solid rgba(0, 242, 255, 0.12);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.85s linear infinite;
+        }
+
+        .loader-text {
+            font-size: 0.7rem;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--primary);
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ── Onboarding ─────────────────────────────── */
+        #onboarding {
+            position: fixed;
+            inset: 0;
+            z-index: 200;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(8px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.4s ease;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .ob-card {
+            background: rgba(8, 14, 28, 0.97);
+            border: 1px solid rgba(0, 242, 255, 0.2);
+            border-radius: 18px;
+            padding: 36px 36px 28px;
+            max-width: 370px;
+            width: 92vw;
+            text-align: center;
+            box-shadow: 0 0 80px rgba(0, 242, 255, 0.07);
+        }
+
+        .ob-card h3 {
+            margin: 0 0 4px;
+            font-size: 1.25rem;
+            color: #fff;
+            letter-spacing: 0.5px;
+        }
+
+        .ob-sub {
+            font-size: 0.68rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--muted);
+            margin-bottom: 26px;
+        }
+
+        .ob-tips {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 24px;
+            text-align: left;
+        }
+
+        .ob-tip {
+            display: flex;
+            align-items: center;
+            gap: 13px;
+            padding: 11px 13px;
+            background: var(--subtle);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+        }
+
+        .ob-tip-icon { font-size: 1.3rem; flex-shrink: 0; }
+
+        .ob-tip-text {
+            font-size: 0.78rem;
+            line-height: 1.45;
+            color: #c8d5e8;
+        }
+
+        .ob-tip-text strong { color: var(--primary); }
+
+        .btn-go {
+            width: 100%;
+            padding: 12px;
+            background: var(--primary);
+            color: #000;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.88rem;
+            font-weight: 700;
+            cursor: pointer;
+            letter-spacing: 0.3px;
+            transition: opacity 0.2s, transform 0.2s;
+        }
+
+        .btn-go:hover { opacity: 0.85; transform: translateY(-1px); }
+
+        /* ── Panel toggle (always-visible when panel is hidden) ── */
+        #toggle-panel {
+            position: fixed;
             top: 20px;
             right: 20px;
-            width: 260px;
-            z-index: 10;
-            background: var(--bg-overlay);
+            z-index: 20;
+            width: 34px;
+            height: 34px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--primary);
+            font-size: 1rem;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
             backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            padding: 20px;
-            border-radius: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-            transition: opacity 0.3s;
+            transition: background 0.2s;
         }
 
-        h2 {
-            font-size: 1.1rem;
-            margin: 0 0 15px 0;
+        #toggle-panel:hover { background: rgba(0, 242, 255, 0.12); }
+        #toggle-panel.visible { display: flex; }
+
+        /* ── Main Panel ─────────────────────────────── */
+        #panel {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: var(--panel-w);
+            z-index: 10;
+            background: var(--bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 16px;
+            box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5);
+            transition: opacity 0.25s, transform 0.25s;
+        }
+
+        #panel.hidden {
+            opacity: 0;
+            pointer-events: none;
+            transform: translateX(16px);
+        }
+
+        .panel-hd {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 14px;
+        }
+
+        .panel-title {
+            font-size: 0.78rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 2px;
             color: #fff;
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 3px;
+        }
+
+        .btn-hide {
+            background: none;
+            border: none;
+            color: var(--muted);
+            font-size: 0.8rem;
+            cursor: pointer;
+            padding: 3px 6px;
+            border-radius: 4px;
+            line-height: 1;
+            transition: color 0.2s;
+        }
+
+        .btn-hide:hover { color: var(--text); }
+
+        /* ── Sections ───────────────────────────────── */
+        .section { margin-bottom: 14px; }
+
+        .lbl {
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+            margin-bottom: 7px;
+        }
+
+        .lbl-main {
+            font-size: 0.63rem;
+            font-weight: 800;
             text-transform: uppercase;
             letter-spacing: 1px;
-            border-bottom: 2px solid var(--primary);
-            padding-bottom: 5px;
-            display: inline-block;
+            color: var(--muted);
         }
 
-        .section {
-            margin-bottom: 20px;
+        .lbl-hint {
+            font-size: 0.6rem;
+            color: #374151;
+            font-weight: 400;
         }
 
-        .label {
-            font-size: 0.7rem;
-            text-transform: uppercase;
-            color: #94a3b8;
-            margin-bottom: 8px;
-            display: block;
-            font-weight: 700;
-        }
-
-        .grid-buttons {
+        /* ── Shape Grid ─────────────────────────────── */
+        .shape-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 5px;
         }
 
-        button {
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+        .shape-btn {
+            background: var(--subtle);
+            border: 1px solid var(--border);
             color: var(--text);
-            padding: 8px 12px;
-            border-radius: 6px;
+            padding: 6px 3px 5px;
+            border-radius: 7px;
             cursor: pointer;
-            font-size: 0.8rem;
-            transition: all 0.2s;
+            font-size: 0.66rem;
+            text-align: center;
+            line-height: 1.3;
+            transition: all 0.15s;
         }
 
-        button:hover {
-            background: rgba(255, 255, 255, 0.2);
-            transform: translateY(-2px);
-        }
+        .shape-btn:hover { background: rgba(255,255,255,0.12); transform: translateY(-1px); }
 
-        button.active {
+        .shape-btn.active {
             background: var(--primary);
             color: #000;
             border-color: var(--primary);
-            font-weight: bold;
-            box-shadow: 0 0 10px rgba(0, 242, 255, 0.5);
+            font-weight: 700;
+            box-shadow: 0 0 10px rgba(0, 242, 255, 0.35);
         }
 
-        /* Color Picker */
+        .shape-icon { display: block; font-size: 1.05rem; margin-bottom: 1px; }
+
+        /* ── Color ──────────────────────────────────── */
         .color-row {
             display: flex;
             align-items: center;
-            background: rgba(0, 0, 0, 0.3);
-            padding: 8px;
-            border-radius: 6px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            gap: 8px;
+            background: var(--subtle);
+            border: 1px solid var(--border);
+            border-radius: 7px;
+            padding: 7px 9px;
         }
 
         input[type="color"] {
@@ -125,540 +319,935 @@
             border-radius: 4px;
             background: none;
             cursor: pointer;
-            margin-right: 10px;
+            flex-shrink: 0;
         }
 
-        input[type="color"]::-webkit-color-swatch {
-            border: none;
-            border-radius: 4px;
-        }
+        input[type="color"]::-webkit-color-swatch { border: none; border-radius: 4px; }
 
-        .status {
-            font-size: 0.7rem;
-            margin-top: 15px;
+        #color-val { font-size: 0.72rem; font-family: monospace; }
+
+        .presets {
             display: flex;
-            align-items: center;
-            color: #64748b;
+            gap: 5px;
+            margin-top: 7px;
+            flex-wrap: wrap;
         }
 
-        .indicator {
-            width: 8px;
-            height: 8px;
+        .preset-dot {
+            width: 16px;
+            height: 16px;
             border-radius: 50%;
-            background: #ef4444;
-            margin-right: 8px;
-            box-shadow: 0 0 5px #ef4444;
-            transition: background 0.3s;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.15s;
+            flex-shrink: 0;
         }
 
-        .indicator.active {
-            background: #22c55e;
-            box-shadow: 0 0 5px #22c55e;
-        }
+        .preset-dot:hover, .preset-dot.on { border-color: rgba(255,255,255,0.7); transform: scale(1.25); }
 
-        #loader {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: #000;
-            z-index: 100;
+        /* ── Sliders ────────────────────────────────── */
+        .slider-wrap {
             display: flex;
             flex-direction: column;
-            justify-content: center;
+            gap: 9px;
+        }
+
+        .slider-row {
+            display: flex;
             align-items: center;
-            color: var(--primary);
-            font-size: 1.2rem;
-            transition: opacity 0.5s;
+            gap: 7px;
         }
 
-        .spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid rgba(0, 242, 255, 0.1);
-            border-top: 4px solid var(--primary);
+        .s-lbl { font-size: 0.62rem; color: var(--muted); min-width: 32px; }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            flex: 1;
+            height: 3px;
+            background: rgba(255,255,255,0.12);
+            border-radius: 2px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 12px;
+            height: 12px;
             border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-bottom: 20px;
+            background: var(--primary);
+            cursor: pointer;
+            box-shadow: 0 0 5px rgba(0, 242, 255, 0.6);
         }
 
-        @keyframes spin {
-            100% {
-                transform: rotate(360deg);
-            }
+        .s-val { font-size: 0.62rem; color: var(--primary); min-width: 26px; text-align: right; font-family: monospace; }
+
+        /* ── Action Buttons ─────────────────────────── */
+        .actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 5px;
+            margin-top: 2px;
         }
 
-        /* Mobile Adjustments */
+        .act-btn {
+            background: var(--subtle);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 7px 6px;
+            border-radius: 7px;
+            cursor: pointer;
+            font-size: 0.69rem;
+            text-align: center;
+            transition: all 0.15s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            white-space: nowrap;
+        }
+
+        .act-btn:hover { background: rgba(255,255,255,0.12); }
+        .act-btn.paused { color: var(--primary); border-color: rgba(0,242,255,0.3); }
+
+        /* ── Status ─────────────────────────────────── */
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            margin-top: 12px;
+            padding-top: 11px;
+            border-top: 1px solid var(--border);
+        }
+
+        .dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #ef4444;
+            box-shadow: 0 0 5px #ef4444;
+            flex-shrink: 0;
+            transition: all 0.3s;
+        }
+
+        .dot.on { background: #22c55e; box-shadow: 0 0 6px #22c55e; }
+
+        #status-text { font-size: 0.67rem; color: var(--muted); }
+
+        /* ── Toast (pinch feedback) ──────────────────── */
+        #toast {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.88);
+            background: var(--bg);
+            border: 1px solid rgba(0,242,255,0.35);
+            border-radius: 10px;
+            padding: 10px 22px;
+            font-size: 0.78rem;
+            color: var(--primary);
+            z-index: 100;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.25s, transform 0.25s;
+        }
+
+        #toast.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+
+        /* ── Keyboard hint ──────────────────────────── */
+        #kb-hint {
+            position: fixed;
+            bottom: 18px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 7px 16px;
+            font-size: 0.62rem;
+            color: #4b5563;
+            letter-spacing: 0.4px;
+            z-index: 10;
+            pointer-events: none;
+            opacity: 0;
+            backdrop-filter: blur(8px);
+            transition: opacity 0.5s;
+            white-space: nowrap;
+        }
+
+        #kb-hint.show { opacity: 1; }
+
+        /* ── Mobile ─────────────────────────────────── */
         @media (max-width: 600px) {
-            #ui-layer {
-                width: auto;
+            :root { --panel-w: auto; }
+
+            #panel {
                 left: 10px;
                 right: 10px;
-                bottom: 20px;
+                bottom: 14px;
                 top: auto;
+                width: auto;
             }
+
+            #toggle-panel { top: auto; bottom: 14px; right: 14px; }
+            #kb-hint { display: none; }
         }
     </style>
 </head>
 
 <body>
 
+    <!-- Loader -->
     <div id="loader">
-        <div class="spinner"></div>
-        <div>Loading Interactive Particles...</div>
+        <div class="loader-ring"></div>
+        <div class="loader-text">Flux Particles</div>
+    </div>
+
+    <!-- Onboarding overlay -->
+    <div id="onboarding">
+        <div class="ob-card">
+            <h3>Flux Particles</h3>
+            <p class="ob-sub">3D Hand-Reactive Experience</p>
+            <div class="ob-tips">
+                <div class="ob-tip">
+                    <span class="ob-tip-icon">🖐️</span>
+                    <span class="ob-tip-text"><strong>Show your hand</strong> — open palm expands the cloud, closed fist contracts it</span>
+                </div>
+                <div class="ob-tip">
+                    <span class="ob-tip-icon">🤏</span>
+                    <span class="ob-tip-text"><strong>Pinch</strong> thumb + index finger to cycle through preset colors</span>
+                </div>
+                <div class="ob-tip">
+                    <span class="ob-tip-icon">🖱️</span>
+                    <span class="ob-tip-text"><strong>Drag</strong> to orbit · <strong>1–9</strong> switch shapes · <strong>Space</strong> pause · <strong>S</strong> screenshot</span>
+                </div>
+            </div>
+            <button class="btn-go" onclick="dismissOnboarding()">Let's Go →</button>
+        </div>
     </div>
 
     <video id="input-video" playsinline></video>
     <div id="canvas-container"></div>
 
-    <div id="ui-layer">
-        <h2>Flux Particles</h2>
+    <!-- Panel re-open button (visible when panel is hidden) -->
+    <button id="toggle-panel" title="Show controls">⊞</button>
 
+    <!-- Control Panel -->
+    <div id="panel">
+        <div class="panel-hd">
+            <span class="panel-title">Flux Particles</span>
+            <button class="btn-hide" id="btn-hide" title="Hide (H)">✕</button>
+        </div>
+
+        <!-- Shapes -->
         <div class="section">
-            <span class="label">Templates</span>
-            <div class="grid-buttons" id="btn-container">
-                <button data-shape="fireworks" class="active">Fireworks</button>
-                <button data-shape="heart">Heart</button>
-                <button data-shape="flower">Flower</button>
-                <button data-shape="saturn">Saturn</button>
-                <button data-shape="buddha">Buddha</button>
-                <button data-shape="nebula">Nebula</button>
+            <div class="lbl">
+                <span class="lbl-main">Shape</span>
+                <span class="lbl-hint">keys 1 – 9</span>
+            </div>
+            <div class="shape-grid" id="shape-grid">
+                <button class="shape-btn active" data-shape="fireworks"><span class="shape-icon">💥</span>Fireworks</button>
+                <button class="shape-btn" data-shape="heart"><span class="shape-icon">❤️</span>Heart</button>
+                <button class="shape-btn" data-shape="flower"><span class="shape-icon">🌸</span>Flower</button>
+                <button class="shape-btn" data-shape="saturn"><span class="shape-icon">🪐</span>Saturn</button>
+                <button class="shape-btn" data-shape="buddha"><span class="shape-icon">🧘</span>Buddha</button>
+                <button class="shape-btn" data-shape="nebula"><span class="shape-icon">🌌</span>Nebula</button>
+                <button class="shape-btn" data-shape="dna"><span class="shape-icon">🧬</span>DNA</button>
+                <button class="shape-btn" data-shape="vortex"><span class="shape-icon">🌪️</span>Vortex</button>
+                <button class="shape-btn" data-shape="star"><span class="shape-icon">⭐</span>Star</button>
             </div>
         </div>
 
+        <!-- Color -->
         <div class="section">
-            <span class="label">Color</span>
+            <div class="lbl">
+                <span class="lbl-main">Color</span>
+                <span class="lbl-hint">pinch to cycle</span>
+            </div>
             <div class="color-row">
-                <input type="color" id="particle-color" value="#00f2ff">
+                <input type="color" id="picker" value="#00f2ff">
                 <span id="color-val">#00f2ff</span>
             </div>
+            <div class="presets" id="presets"></div>
         </div>
 
+        <!-- Sliders -->
+        <div class="section">
+            <div class="lbl"><span class="lbl-main">Controls</span></div>
+            <div class="slider-wrap">
+                <div class="slider-row">
+                    <span class="s-lbl">Speed</span>
+                    <input type="range" id="sl-speed" min="1" max="30" value="8">
+                    <span class="s-val" id="sv-speed">0.08</span>
+                </div>
+                <div class="slider-row">
+                    <span class="s-lbl">Size</span>
+                    <input type="range" id="sl-size" min="4" max="40" value="12">
+                    <span class="s-val" id="sv-size">0.12</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="actions">
+            <button class="act-btn" id="btn-pause">⏸ Pause</button>
+            <button class="act-btn" id="btn-shot">📷 Save</button>
+        </div>
+
+        <!-- Status -->
         <div class="status">
-            <div class="indicator" id="cam-indicator"></div>
-            <span id="status-text">Waiting for Camera...</span>
+            <div class="dot" id="cam-dot"></div>
+            <span id="status-text">Waiting for camera…</span>
         </div>
     </div>
 
-    <!-- EXTERNAL LIBRARIES -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <!-- OrbitControls (Global) -->
-    <script src="https://unpkg.com/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <div id="toast">🤏 Color cycled</div>
+    <div id="kb-hint">1–9 shapes &nbsp;·&nbsp; Space pause &nbsp;·&nbsp; R reset &nbsp;·&nbsp; H hide &nbsp;·&nbsp; S screenshot</div>
 
-    <!-- MediaPipe Hands -->
+    <!-- Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://unpkg.com/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js"
-        crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"
-        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
 
     <script>
-        /**
-         * MAIN APPLICATION LOGIC
-         */
+    // ═══════════════════════════════════════════════════════════════
+    //  CONFIG
+    // ═══════════════════════════════════════════════════════════════
+    const CONFIG = {
+        count:     15000,
+        size:      0.12,   // world-unit size fed to shader
+        lerpSpeed: 0.08,   // morph interpolation per frame
+    };
 
-        // Configuration
-        const CONFIG = {
-            count: 15000,
-            size: 0.12,
-            lerpSpeed: 0.08,
-            defaultColor: 0x00f2ff
-        };
+    const PALETTE = [
+        '#00f2ff','#ff006e','#fb5607',
+        '#8338ec','#3a86ff','#06d6a0',
+        '#ffd166','#ef233c','#ffffff'
+    ];
 
-        // Global State
-        let scene, camera, renderer, controls, particles;
-        let targetPositions = null; // Float32Array
-        let currentShape = 'fireworks';
-        let handTension = 0; // 0.0 to 1.0 (Closed to Open)
-        let isHandDetected = false;
-        let time = 0;
+    const SHAPES = ['fireworks','heart','flower','saturn','buddha','nebula','dna','vortex','star'];
 
-        // --- INITIALIZATION ---
-        function init() {
-            initThree();
-            initParticles();
-            initMediaPipe();
-            initUI();
+    // ═══════════════════════════════════════════════════════════════
+    //  SHADERS
+    // ═══════════════════════════════════════════════════════════════
+    const VERT = `
+        attribute vec3 aColor;
+        uniform  float uSize;
+        uniform  float uScale;
+        varying  vec3  vColor;
 
-            animate();
+        void main() {
+            vColor = aColor;
+            vec4 mv = modelViewMatrix * vec4(position, 1.0);
+            // Perspective-correct point size that matches Three.js PointsMaterial
+            gl_PointSize = uSize * uScale * 2.8 / -mv.z;
+            gl_PointSize = clamp(gl_PointSize, 0.5, 32.0);
+            gl_Position  = projectionMatrix * mv;
+        }
+    `;
 
-            // Remove loader
+    const FRAG = `
+        uniform float uAlpha;
+        varying vec3  vColor;
+
+        void main() {
+            // Soft circular glow — bright core, smooth fade to transparent edge
+            vec2  uv   = gl_PointCoord - 0.5;
+            float d    = length(uv);
+            if (d > 0.5) discard;
+            float str  = pow(1.0 - d * 2.0, 2.2);
+            gl_FragColor = vec4(vColor, str * uAlpha);
+        }
+    `;
+
+    // ═══════════════════════════════════════════════════════════════
+    //  STATE
+    // ═══════════════════════════════════════════════════════════════
+    let scene, camera, renderer, controls, particles;
+    let targetPos   = null;   // Float32Array — shape targets
+    let noisePhase  = null;   // Float32Array — per-particle idle phase offsets
+    let currentShape   = 'fireworks';
+    let handTension    = 0;
+    let isHandDetected = false;
+    let wasPinching    = false;
+    let colorIndex     = 0;
+    let isPaused       = false;
+    let time           = 0;
+
+    // ═══════════════════════════════════════════════════════════════
+    //  BOOT
+    // ═══════════════════════════════════════════════════════════════
+    function init() {
+        initThree();
+        initParticles();
+        initMediaPipe();
+        initUI();
+        initKeyboard();
+        animate();
+
+        const loader = document.getElementById('loader');
+        setTimeout(() => {
+            loader.style.opacity = '0';
             setTimeout(() => {
-                document.getElementById('loader').style.opacity = 0;
-                setTimeout(() => document.getElementById('loader').remove(), 500);
-            }, 1500);
+                loader.remove();
+                showOnboarding();
+            }, 700);
+        }, 1200);
+    }
+
+    // ─── Three.js setup ─────────────────────────────────────────
+    function initThree() {
+        const container = document.getElementById('canvas-container');
+
+        scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x030509, 0.016);
+
+        camera = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, 0.1, 1000);
+        camera.position.set(0, 0, 42);
+
+        renderer = new THREE.WebGLRenderer({
+            antialias: true,
+            alpha: true,
+            preserveDrawingBuffer: true   // required for screenshot
+        });
+        renderer.setSize(innerWidth, innerHeight);
+        renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+        renderer.domElement.style.touchAction = 'none';
+        container.appendChild(renderer.domElement);
+
+        if (THREE.OrbitControls) {
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping   = true;
+            controls.dampingFactor   = 0.055;
+            controls.autoRotate      = true;
+            controls.autoRotateSpeed = 0.75;
+            controls.minDistance     = 4;
+            controls.maxDistance     = 120;
         }
 
-        function initThree() {
-            const container = document.getElementById('canvas-container');
+        window.addEventListener('resize', () => {
+            camera.aspect = innerWidth / innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(innerWidth, innerHeight);
+            if (particles) particles.material.uniforms.uScale.value = innerHeight / 2;
+        });
+    }
 
-            scene = new THREE.Scene();
-            // Fog for depth
-            scene.fog = new THREE.FogExp2(0x050505, 0.02);
+    // ─── Particle geometry + shader ─────────────────────────────
+    function initParticles() {
+        const geo      = new THREE.BufferGeometry();
+        const positions = new Float32Array(CONFIG.count * 3);
+        const colors    = new Float32Array(CONFIG.count * 3);
+        targetPos       = new Float32Array(CONFIG.count * 3);
+        noisePhase      = new Float32Array(CONFIG.count * 3);
 
-            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.set(0, 0, 40);
+        for (let i = 0; i < CONFIG.count; i++) {
+            const p = spherePoint(20);
+            positions[i*3]   = p.x;
+            positions[i*3+1] = p.y;
+            positions[i*3+2] = p.z;
+            // Unique phase offset per axis per particle for organic idle drift
+            noisePhase[i*3]   = Math.random() * Math.PI * 2;
+            noisePhase[i*3+1] = Math.random() * Math.PI * 2;
+            noisePhase[i*3+2] = Math.random() * Math.PI * 2;
+        }
 
-            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-            container.appendChild(renderer.domElement);
+        geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        geo.setAttribute('aColor',   new THREE.BufferAttribute(colors, 3));
 
-            // Orbit Controls
-            if (THREE.OrbitControls) {
-                controls = new THREE.OrbitControls(camera, renderer.domElement);
-                controls.enableDamping = true;
-                controls.dampingFactor = 0.05;
-                controls.autoRotate = true;
-                controls.autoRotateSpeed = 1.0;
+        const mat = new THREE.ShaderMaterial({
+            uniforms: {
+                uSize:  { value: CONFIG.size },
+                uScale: { value: innerHeight / 2 },
+                uAlpha: { value: 0.95 }
+            },
+            vertexShader:   VERT,
+            fragmentShader: FRAG,
+            transparent: true,
+            blending:    THREE.AdditiveBlending,
+            depthTest:   false
+        });
+
+        particles = new THREE.Points(geo, mat);
+        scene.add(particles);
+
+        applyColor(PALETTE[0]);
+        updateShapeTargets('fireworks');
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    //  COLOR
+    // ═══════════════════════════════════════════════════════════════
+    function applyColor(hex) {
+        // Update picker + label
+        document.getElementById('picker').value   = hex;
+        document.getElementById('color-val').innerText = hex;
+
+        // Sync preset dot active state
+        document.querySelectorAll('.preset-dot').forEach(d => {
+            d.classList.toggle('on', d.dataset.c === hex);
+        });
+
+        // Rebuild per-particle aColor with subtle HSL variation
+        const base = new THREE.Color(hex);
+        const hsl  = {};
+        base.getHSL(hsl);
+
+        const arr = particles.geometry.attributes.aColor.array;
+        const tmp = new THREE.Color();
+
+        for (let i = 0; i < CONFIG.count; i++) {
+            tmp.setHSL(
+                (hsl.h + (Math.random() - 0.5) * 0.10 + 1) % 1,
+                Math.max(0.2, Math.min(1.0, hsl.s + (Math.random() - 0.5) * 0.25)),
+                Math.max(0.28, Math.min(1.0, hsl.l + (Math.random() - 0.5) * 0.28))
+            );
+            arr[i*3]   = tmp.r;
+            arr[i*3+1] = tmp.g;
+            arr[i*3+2] = tmp.b;
+        }
+        particles.geometry.attributes.aColor.needsUpdate = true;
+    }
+
+    function cycleColor() {
+        colorIndex = (colorIndex + 1) % PALETTE.length;
+        applyColor(PALETTE[colorIndex]);
+        flashToast('🤏 Color cycled');
+    }
+
+    let toastTimer;
+    function flashToast(msg) {
+        const el = document.getElementById('toast');
+        el.innerText = msg;
+        el.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => el.classList.remove('show'), 1300);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    //  SHAPE GENERATORS
+    // ═══════════════════════════════════════════════════════════════
+    function spherePoint(r) {
+        const theta = Math.random() * Math.PI * 2;
+        const phi   = Math.acos(2 * Math.random() - 1);
+        const rad   = Math.cbrt(Math.random()) * r;
+        return {
+            x: rad * Math.sin(phi) * Math.cos(theta),
+            y: rad * Math.sin(phi) * Math.sin(theta),
+            z: rad * Math.cos(phi)
+        };
+    }
+
+    function shapePoint(type) {
+        switch (type) {
+
+            case 'fireworks': {
+                return spherePoint(13 + Math.random() * 11);
             }
 
-            window.addEventListener('resize', () => {
-                camera.aspect = window.innerWidth / window.innerHeight;
-                camera.updateProjectionMatrix();
-                renderer.setSize(window.innerWidth, window.innerHeight);
-            });
-        }
-
-        function initParticles() {
-            const geometry = new THREE.BufferGeometry();
-            const positions = new Float32Array(CONFIG.count * 3);
-            targetPositions = new Float32Array(CONFIG.count * 3);
-
-            // Initial Layout (Random Sphere)
-            for (let i = 0; i < CONFIG.count; i++) {
-                const p = getRandomPointInSphere(20);
-                positions[i * 3] = p.x;
-                positions[i * 3 + 1] = p.y;
-                positions[i * 3 + 2] = p.z;
-            }
-
-            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-
-            const material = new THREE.PointsMaterial({
-                color: CONFIG.defaultColor,
-                size: CONFIG.size,
-                transparent: true,
-                opacity: 0.8,
-                blending: THREE.AdditiveBlending,
-                depthTest: false
-            });
-
-            particles = new THREE.Points(geometry, material);
-            scene.add(particles);
-
-            // Calculate initial targets
-            updateShapeTargets('fireworks');
-        }
-
-        // --- SHAPE GENERATORS ---
-
-        function getRandomPointInSphere(radius) {
-            const u = Math.random();
-            const v = Math.random();
-            const theta = 2 * Math.PI * u;
-            const phi = Math.acos(2 * v - 1);
-            const r = Math.cbrt(Math.random()) * radius;
-            return {
-                x: r * Math.sin(phi) * Math.cos(theta),
-                y: r * Math.sin(phi) * Math.sin(theta),
-                z: r * Math.cos(phi)
-            };
-        }
-
-        function getShapePoint(type, i, count) {
-            const u = Math.random();
-            const v = Math.random();
-
-            switch (type) {
-                case 'fireworks': {
-                    // Random explosion
-                    return getRandomPointInSphere(15 + Math.random() * 10);
-                }
-                case 'heart': {
-                    // 3D Heart (Modified formula)
-                    // x = 16 sin^3 t
-                    // y = 13 cos t - 5 cos 2t - 2 cos 3t - cos 4t
-                    // z = varied thickness
-                    // We use rejection sampling for volume
-                    let x, y, z;
-                    while (true) {
-                        x = (Math.random() * 4 - 2); // -2 to 2
-                        y = (Math.random() * 4 - 2); // -2 to 2
-                        z = (Math.random() * 4 - 2); // -2 to 2
-                        // Heart Formula: (x^2 + 9/4y^2 + z^2 - 1)^3 - x^2z^3 - 9/80y^2z^3 <= 0
-                        const x2 = x * x;
-                        const y2 = y * y;
-                        const z2 = z * z;
-                        // Standard formula uses Z as UP, lets swap Y/Z for ThreeJS (Y is up)
-                        // (x^2 + 9/4z^2 + y^2 - 1)^3 ...
-
-                        const a = x2 + (9 / 4) * z2 + y2 - 1;
-                        if (a * a * a - x2 * y2 * y - (9 / 80) * z2 * y2 * y <= 0) {
-                            return { x: x * 8, y: y * 8 + 3, z: z * 8 };
-                        }
-                        if (Math.random() > 0.99) return { x: 0, y: 0, z: 0 }; // safety break
-                    }
-                }
-                case 'flower': {
-                    // 3D rose/flower
-                    const theta = Math.random() * Math.PI * 2;
-                    const phi = Math.random() * Math.PI;
-                    // Petals
-                    const r = 10 + 5 * Math.cos(5 * theta) * Math.sin(3 * phi);
-
-                    return {
-                        x: r * Math.sin(phi) * Math.cos(theta),
-                        y: r * Math.sin(phi) * Math.sin(theta),
-                        z: r * Math.cos(phi)
-                    };
-                }
-                case 'saturn': {
-                    // 75% Ring, 25% Planet
-                    if (Math.random() > 0.25) {
-                        // Ring
-                        const angle = Math.random() * Math.PI * 2;
-                        const r = 14 + Math.random() * 6; // 14-20
-                        return {
-                            x: r * Math.cos(angle),
-                            y: (Math.random() - 0.5) * 0.5,
-                            z: r * Math.sin(angle)
-                        };
-                    } else {
-                        // Planet
-                        return getRandomPointInSphere(9);
-                    }
-                }
-                case 'buddha': {
-                    // Procedural "Seated Figure"
-                    // Weights for body parts
-                    const rand = Math.random();
-
-                    if (rand < 0.15) {
-                        // Head
-                        const p = getRandomPointInSphere(3);
-                        return { x: p.x, y: p.y + 7, z: p.z };
-                    } else if (rand < 0.55) {
-                        // Torso
-                        const p = getRandomPointInSphere(5);
-                        // Flatten slightly for torso shape, elongate Y
-                        return { x: p.x * 1.1, y: p.y * 1.2 + 1, z: p.z * 0.9 };
-                    } else {
-                        // Legs / Base (Crossed legs approximation)
-                        // Wide ellipse at bottom
-                        const angle = Math.random() * Math.PI * 2;
-                        const r = Math.random() * 7;
-                        const height = Math.random() * 4;
-                        // Base shape
-                        return {
-                            x: r * Math.cos(angle) * 1.4,
-                            y: (Math.random() * -4) - 2,
-                            z: r * Math.sin(angle)
-                        };
-                    }
-                }
-                case 'nebula': {
-                    // Spiral Galaxy
-                    const angle = Math.random() * Math.PI * 8; // 4 turns
-                    const r = angle * 0.8 + Math.random() * 2;
-                    // Add arms
-                    const armOffset = (Math.floor(Math.random() * 3) * (Math.PI * 2 / 3));
-                    const finalAngle = angle + armOffset;
-
-                    return {
-                        x: r * Math.cos(finalAngle),
-                        y: (Math.random() - 0.5) * (10 - r * 0.3), // Thicker at center
-                        z: r * Math.sin(finalAngle)
-                    };
+            case 'heart': {
+                // Implicit algebraic heart surface with rejection sampling
+                for (;;) {
+                    const x = Math.random() * 4 - 2;
+                    const y = Math.random() * 4 - 2;
+                    const z = Math.random() * 4 - 2;
+                    const a = x*x + (9/4)*z*z + y*y - 1;
+                    if (a*a*a - x*x*y*y*y - (9/80)*z*z*y*y*y <= 0)
+                        return { x: x*8, y: y*8+3, z: z*8 };
+                    if (Math.random() > 0.995) return { x:0, y:0, z:0 };
                 }
             }
-            return { x: 0, y: 0, z: 0 };
-        }
 
-        function updateShapeTargets(type) {
-            currentShape = type;
-            for (let i = 0; i < CONFIG.count; i++) {
-                const p = getShapePoint(type, i, CONFIG.count);
-                targetPositions[i * 3] = p.x;
-                targetPositions[i * 3 + 1] = p.y;
-                targetPositions[i * 3 + 2] = p.z;
+            case 'flower': {
+                // Parametric rose in spherical coords
+                const theta = Math.random() * Math.PI * 2;
+                const phi   = Math.random() * Math.PI;
+                const r     = 10 + 5 * Math.cos(5*theta) * Math.sin(3*phi);
+                return {
+                    x: r * Math.sin(phi) * Math.cos(theta),
+                    y: r * Math.sin(phi) * Math.sin(theta),
+                    z: r * Math.cos(phi)
+                };
+            }
+
+            case 'saturn': {
+                if (Math.random() > 0.28) {
+                    // Ring
+                    const a = Math.random() * Math.PI * 2;
+                    const r = 14 + Math.random() * 6;
+                    return { x: r*Math.cos(a), y: (Math.random()-0.5)*0.55, z: r*Math.sin(a) };
+                }
+                // Planet body
+                return spherePoint(9);
+            }
+
+            case 'buddha': {
+                const r = Math.random();
+                if (r < 0.15) {
+                    const p = spherePoint(3);
+                    return { x: p.x, y: p.y+7, z: p.z };
+                }
+                if (r < 0.55) {
+                    const p = spherePoint(5);
+                    return { x: p.x*1.1, y: p.y*1.2+1, z: p.z*0.9 };
+                }
+                const a = Math.random() * Math.PI * 2;
+                return { x: Math.random()*7*Math.cos(a)*1.4, y: Math.random()*-4-2, z: Math.random()*7*Math.sin(a) };
+            }
+
+            case 'nebula': {
+                // 3-arm Archimedean spiral galaxy
+                const t   = Math.random() * Math.PI * 8;
+                const r   = t * 0.8 + Math.random() * 2;
+                const arm = Math.floor(Math.random() * 3) * (Math.PI * 2 / 3);
+                const fa  = t + arm;
+                return {
+                    x: r * Math.cos(fa),
+                    y: (Math.random()-0.5) * Math.max(0.5, 10 - r*0.28),
+                    z: r * Math.sin(fa)
+                };
+            }
+
+            case 'dna': {
+                // Double helix — two strands offset by π
+                const t   = Math.random() * Math.PI * 10;        // 5 full turns
+                const arm = Math.random() > 0.5 ? 0 : Math.PI;
+                const r   = 4.5 + (Math.random()-0.5) * 0.55;
+                return {
+                    x: r * Math.cos(t + arm),
+                    y: (t / (Math.PI * 10)) * 20 - 10,           // Y: −10 → +10
+                    z: r * Math.sin(t + arm)
+                };
+            }
+
+            case 'vortex': {
+                // Expanding spiral cone (tornado)
+                const t    = Math.random() * Math.PI * 16;
+                const frac = t / (Math.PI * 16);                  // 0 → 1, bottom → top
+                const r    = 1.5 + frac * 12.5;
+                const jit  = (Math.random()-0.5) * r * 0.1;
+                return {
+                    x: r * Math.cos(t*2) + jit,
+                    y: frac * 22 - 11,
+                    z: r * Math.sin(t*2) + jit
+                };
+            }
+
+            case 'star': {
+                // 8-arm starburst
+                const numArms  = 8;
+                const arm      = Math.floor(Math.random() * numArms);
+                const angle    = (arm / numArms) * Math.PI * 2;
+                const r        = Math.random() * 18;
+                const spread   = r * 0.11 + 0.4;
+                return {
+                    x: r * Math.cos(angle) + (Math.random()-0.5) * spread * 2.2,
+                    y: (Math.random()-0.5) * spread * 1.8,
+                    z: r * Math.sin(angle) + (Math.random()-0.5) * spread * 2.2
+                };
             }
         }
+        return { x:0, y:0, z:0 };
+    }
 
-        // --- INTERACTION & MEDIAPIPE ---
+    function updateShapeTargets(type) {
+        currentShape = type;
+        for (let i = 0; i < CONFIG.count; i++) {
+            const p = shapePoint(type);
+            targetPos[i*3]   = p.x;
+            targetPos[i*3+1] = p.y;
+            targetPos[i*3+2] = p.z;
+        }
+    }
 
-        function initMediaPipe() {
-            const videoElement = document.getElementById('input-video');
-            const indicator = document.getElementById('cam-indicator');
-            const statusText = document.getElementById('status-text');
+    // ═══════════════════════════════════════════════════════════════
+    //  MEDIAPIPE HANDS
+    // ═══════════════════════════════════════════════════════════════
+    function initMediaPipe() {
+        const video  = document.getElementById('input-video');
+        const dot    = document.getElementById('cam-dot');
+        const status = document.getElementById('status-text');
 
-            const hands = new Hands({
-                locateFile: (file) => {
-                    return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
-                }
-            });
+        const hands = new Hands({
+            locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}`
+        });
 
-            hands.setOptions({
-                maxNumHands: 2,
-                modelComplexity: 1,
-                minDetectionConfidence: 0.5,
-                minTrackingConfidence: 0.5
-            });
+        hands.setOptions({
+            maxNumHands: 2,
+            modelComplexity: 1,
+            minDetectionConfidence: 0.5,
+            minTrackingConfidence:  0.5
+        });
 
-            hands.onResults((results) => {
-                if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
-                    isHandDetected = true;
+        hands.onResults(results => {
+            if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+                isHandDetected = true;
+                if (controls) controls.autoRotate = false;
 
-                    // Calculate Tension
-                    // Avg distance from Tips to Wrist
-                    let totalDist = 0;
-                    let handCount = 0;
+                let totalDist  = 0;
+                let handCount  = 0;
+                let isPinching = false;
 
-                    results.multiHandLandmarks.forEach(landmarks => {
-                        const wrist = landmarks[0];
-                        const tips = [4, 8, 12, 16, 20]; // Fingertips
-
-                        let handAvg = 0;
-                        tips.forEach(idx => {
-                            const tip = landmarks[idx];
-                            const d = Math.sqrt(
-                                (tip.x - wrist.x) ** 2 +
-                                (tip.y - wrist.y) ** 2 +
-                                (tip.z - wrist.z) ** 2
-                            );
-                            handAvg += d;
-                        });
-                        totalDist += (handAvg / 5);
-                        handCount++;
+                results.multiHandLandmarks.forEach(lm => {
+                    const wrist = lm[0];
+                    // Tension: avg wrist→fingertip distance
+                    let avg = 0;
+                    [4,8,12,16,20].forEach(idx => {
+                        const tip = lm[idx];
+                        avg += Math.sqrt((tip.x-wrist.x)**2 + (tip.y-wrist.y)**2 + (tip.z-wrist.z)**2);
                     });
+                    totalDist += avg / 5;
+                    handCount++;
 
-                    // Normalizing 
-                    // Closed fist ~ 0.15, Open palm ~ 0.4
-                    const rawVal = totalDist / handCount;
-                    const minVal = 0.15;
-                    const maxVal = 0.45;
-
-                    // Map to 0..1
-                    let t = (rawVal - minVal) / (maxVal - minVal);
-                    handTension = Math.max(0, Math.min(1, t)); // Clamp
-
-                    // Status Update
-                    statusText.innerText = "Tracking Hand(s)";
-                    statusText.style.color = "#22c55e";
-                    indicator.classList.add('active');
-
-                    // Stop auto rotate if interacting
-                    if (controls) controls.autoRotate = false;
-
-                } else {
-                    isHandDetected = false;
-                    statusText.innerText = "No Hands Detected";
-                    statusText.style.color = "#64748b";
-                    if (isCameraActive) indicator.classList.add('active'); // Still active just no result
-
-                    // Resume auto rotate
-                    if (controls) controls.autoRotate = true;
-                }
-            });
-
-            let isCameraActive = false;
-            const cameraUtils = new Camera(videoElement, {
-                onFrame: async () => {
-                    await hands.send({ image: videoElement });
-                },
-                width: 640,
-                height: 480
-            });
-
-            cameraUtils.start()
-                .then(() => {
-                    isCameraActive = true;
-                    statusText.innerText = "Camera Active - Show Hands";
-                })
-                .catch(e => {
-                    console.error(e);
-                    statusText.innerText = "Camera Blocked / Error";
-                    indicator.style.backgroundColor = 'orange';
+                    // Pinch: thumb tip (4) ↔ index tip (8)
+                    const th = lm[4], ix = lm[8];
+                    const pd = Math.sqrt((th.x-ix.x)**2 + (th.y-ix.y)**2 + (th.z-ix.z)**2);
+                    if (pd < 0.05) isPinching = true;
                 });
-        }
 
-        // --- UI LOGIC ---
-        function initUI() {
-            // Buttons
-            const btns = document.querySelectorAll('#btn-container button');
-            btns.forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    btns.forEach(b => b.classList.remove('active'));
-                    e.target.classList.add('active');
-                    updateShapeTargets(e.target.dataset.shape);
-                });
-            });
+                // Trigger color cycle on pinch leading edge
+                if (isPinching && !wasPinching) cycleColor();
+                wasPinching = isPinching;
 
-            // Color
-            const picker = document.getElementById('particle-color');
-            const label = document.getElementById('color-val');
+                // Normalise tension 0–1 (0.15 = closed, 0.45 = open)
+                handTension = Math.max(0, Math.min(1, ((totalDist / handCount) - 0.15) / 0.30));
 
-            picker.addEventListener('input', (e) => {
-                const hex = e.target.value;
-                particles.material.color.set(hex);
-                label.innerText = hex;
-            });
-        }
+                status.innerText  = 'Tracking Hand(s)';
+                status.style.color = '#22c55e';
+                dot.classList.add('on');
 
-        // --- ANIMATION ---
-        function animate() {
-            requestAnimationFrame(animate);
-
-            time += 0.01;
-
-            if (controls) controls.update();
-
-            // 1. Calculate Interaction Scale
-            // Base scale 1.0
-            // Tension 0 (Closed) -> Contract -> 0.4
-            // Tension 1 (Open) -> Expand -> 1.8
-
-            let targetScale = 1.0;
-            if (isHandDetected) {
-                targetScale = 0.4 + (handTension * 1.4);
             } else {
-                // Idle breathing
-                targetScale = 1.0 + Math.sin(time) * 0.1;
+                isHandDetected = false;
+                wasPinching    = false;
+                if (controls) controls.autoRotate = true;
+                status.innerText  = 'No hands detected';
+                status.style.color = '';
+            }
+        });
+
+        const cam = new Camera(video, {
+            onFrame: async () => { await hands.send({ image: video }); },
+            width: 640,
+            height: 480
+        });
+
+        cam.start()
+            .then(() => {
+                dot.classList.add('on');
+                status.innerText = 'Camera active — show hand';
+            })
+            .catch(err => {
+                console.warn('Camera:', err);
+                status.innerText = 'Camera unavailable';
+                dot.style.background  = '#f59e0b';
+                dot.style.boxShadow   = '0 0 5px #f59e0b';
+            });
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    //  UI SETUP
+    // ═══════════════════════════════════════════════════════════════
+    function initUI() {
+        // Shape buttons
+        document.querySelectorAll('.shape-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.shape-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                updateShapeTargets(btn.dataset.shape);
+            });
+        });
+
+        // Color picker
+        document.getElementById('picker').addEventListener('input', e => {
+            document.getElementById('color-val').innerText = e.target.value;
+            document.querySelectorAll('.preset-dot').forEach(d => d.classList.remove('on'));
+            applyColor(e.target.value);
+        });
+
+        // Preset dots
+        const presetsEl = document.getElementById('presets');
+        PALETTE.forEach((hex, i) => {
+            const d = document.createElement('div');
+            d.className   = 'preset-dot' + (i === 0 ? ' on' : '');
+            d.dataset.c   = hex;
+            d.style.background = hex;
+            d.title = hex;
+            d.addEventListener('click', () => {
+                colorIndex = i;
+                applyColor(hex);
+            });
+            presetsEl.appendChild(d);
+        });
+
+        // Speed slider
+        const slSpeed = document.getElementById('sl-speed');
+        const svSpeed = document.getElementById('sv-speed');
+        slSpeed.addEventListener('input', () => {
+            CONFIG.lerpSpeed = slSpeed.value / 100;
+            svSpeed.innerText = CONFIG.lerpSpeed.toFixed(2);
+        });
+
+        // Size slider
+        const slSize = document.getElementById('sl-size');
+        const svSize = document.getElementById('sv-size');
+        slSize.addEventListener('input', () => {
+            CONFIG.size = slSize.value / 100;
+            particles.material.uniforms.uSize.value = CONFIG.size;
+            svSize.innerText = CONFIG.size.toFixed(2);
+        });
+
+        // Pause / Resume
+        document.getElementById('btn-pause').addEventListener('click', togglePause);
+
+        // Screenshot
+        document.getElementById('btn-shot').addEventListener('click', takeScreenshot);
+
+        // Panel hide / show
+        document.getElementById('btn-hide').addEventListener('click', hidePanel);
+        document.getElementById('toggle-panel').addEventListener('click', showPanel);
+    }
+
+    function hidePanel() {
+        document.getElementById('panel').classList.add('hidden');
+        document.getElementById('toggle-panel').classList.add('visible');
+    }
+
+    function showPanel() {
+        document.getElementById('panel').classList.remove('hidden');
+        document.getElementById('toggle-panel').classList.remove('visible');
+    }
+
+    function togglePause() {
+        isPaused = !isPaused;
+        const btn = document.getElementById('btn-pause');
+        btn.classList.toggle('paused', isPaused);
+        btn.innerText = isPaused ? '▶ Resume' : '⏸ Pause';
+        if (!isPaused) animate();
+    }
+
+    function takeScreenshot() {
+        renderer.render(scene, camera);
+        const a = Object.assign(document.createElement('a'), {
+            href:     renderer.domElement.toDataURL('image/png'),
+            download: `flux-${Date.now()}.png`
+        });
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        flashToast('📷 Screenshot saved');
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    //  KEYBOARD
+    // ═══════════════════════════════════════════════════════════════
+    function initKeyboard() {
+        let hintShown = false;
+
+        document.addEventListener('keydown', e => {
+            // Show hint strip on first keypress
+            if (!hintShown) {
+                hintShown = true;
+                const h = document.getElementById('kb-hint');
+                h.classList.add('show');
+                setTimeout(() => h.classList.remove('show'), 3500);
             }
 
-            // Lerp scale for smoothness
-            particles.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), 0.1);
+            const k = e.key;
 
-            // 2. Update Particle Positions (Morphing)
-            const positions = particles.geometry.attributes.position.array;
-
-            for (let i = 0; i < CONFIG.count; i++) {
-                const idx = i * 3;
-
-                // Move towards target
-                positions[idx] += (targetPositions[idx] - positions[idx]) * CONFIG.lerpSpeed;
-                positions[idx + 1] += (targetPositions[idx + 1] - positions[idx + 1]) * CONFIG.lerpSpeed;
-                positions[idx + 2] += (targetPositions[idx + 2] - positions[idx + 2]) * CONFIG.lerpSpeed;
-
-                // Add subtle noise if idle to keep it alive
-                if (!isHandDetected) {
-                    // positions[idx] += (Math.random()-0.5) * 0.05;
-                    // positions[idx+1] += (Math.random()-0.5) * 0.05;
-                    // positions[idx+2] += (Math.random()-0.5) * 0.05;
-                }
+            // 1–9: switch shape
+            const n = parseInt(k);
+            if (n >= 1 && n <= 9 && SHAPES[n-1]) {
+                const shape = SHAPES[n-1];
+                document.querySelectorAll('.shape-btn').forEach(b => {
+                    b.classList.toggle('active', b.dataset.shape === shape);
+                });
+                updateShapeTargets(shape);
+                return;
             }
 
-            particles.geometry.attributes.position.needsUpdate = true;
+            switch (k.toLowerCase()) {
+                case 'r':
+                    camera.position.set(0, 0, 42);
+                    if (controls) controls.reset();
+                    break;
+                case ' ':
+                    e.preventDefault();
+                    togglePause();
+                    break;
+                case 'h':
+                    document.getElementById('panel').classList.contains('hidden')
+                        ? showPanel() : hidePanel();
+                    break;
+                case 's':
+                    takeScreenshot();
+                    break;
+            }
+        });
+    }
 
-            renderer.render(scene, camera);
+    // ═══════════════════════════════════════════════════════════════
+    //  ONBOARDING
+    // ═══════════════════════════════════════════════════════════════
+    function showOnboarding() {
+        if (localStorage.getItem('flux-v2')) return;
+        document.getElementById('onboarding').style.display = 'flex';
+    }
+
+    function dismissOnboarding() {
+        localStorage.setItem('flux-v2', '1');
+        document.getElementById('onboarding').style.display = 'none';
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    //  ANIMATION LOOP
+    // ═══════════════════════════════════════════════════════════════
+    function animate() {
+        if (isPaused) return;
+        requestAnimationFrame(animate);
+
+        time += 0.008;
+
+        if (controls) controls.update();
+
+        // ── Scale (hand tension or idle breathing) ──────────────
+        const targetScale = isHandDetected
+            ? 0.4 + handTension * 1.5
+            : 1.0 + Math.sin(time * 1.25) * 0.065;
+
+        particles.scale.lerp(
+            new THREE.Vector3(targetScale, targetScale, targetScale),
+            0.09
+        );
+
+        // ── Particle positions: lerp + organic idle noise ────────
+        const pos   = particles.geometry.attributes.position.array;
+        const noise = 0.011; // idle drift amplitude
+
+        for (let i = 0; i < CONFIG.count; i++) {
+            const k = i * 3;
+            // Lerp toward shape target
+            pos[k]   += (targetPos[k]   - pos[k])   * CONFIG.lerpSpeed;
+            pos[k+1] += (targetPos[k+1] - pos[k+1]) * CONFIG.lerpSpeed;
+            pos[k+2] += (targetPos[k+2] - pos[k+2]) * CONFIG.lerpSpeed;
+            // Organic breathing when no hand present
+            if (!isHandDetected) {
+                pos[k]   += Math.sin(time * 0.72 + noisePhase[k])   * noise;
+                pos[k+1] += Math.cos(time * 0.53 + noisePhase[k+1]) * noise;
+                pos[k+2] += Math.sin(time * 0.91 + noisePhase[k+2]) * noise;
+            }
         }
 
-        // Start
-        init();
+        particles.geometry.attributes.position.needsUpdate = true;
+        renderer.render(scene, camera);
+    }
 
+    // ═══════════════════════════════════════════════════════════════
+    //  START
+    // ═══════════════════════════════════════════════════════════════
+    init();
     </script>
 </body>
-
 </html>
