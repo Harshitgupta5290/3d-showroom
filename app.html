@@ -634,6 +634,99 @@
             transform: translateX(-50%) translateY(0);
         }
 
+        /* ─── JARVIS MODE ───────────────────────────────────── */
+        .jarvis-btn {
+            background: linear-gradient(135deg,rgba(124,58,237,0.28),rgba(0,242,255,0.14));
+            border-color: rgba(124,58,237,0.35) !important;
+            color: #a78bfa !important;
+            grid-column: span 2;
+        }
+        .jarvis-btn:hover { background: linear-gradient(135deg,rgba(124,58,237,0.48),rgba(0,242,255,0.24)) !important; }
+        .jarvis-btn.active { background: linear-gradient(135deg,#7c3aed,#00f2ff) !important; color:#000 !important; box-shadow:0 0 20px rgba(124,58,237,0.5); }
+
+        #jarvis-overlay {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            z-index: 50;
+            background: linear-gradient(to top, rgba(2,4,8,0.97) 70%, transparent);
+            padding: 18px 28px 22px;
+            display: none; flex-direction: column; gap: 10px;
+            border-top: 1px solid rgba(124,58,237,0.2);
+            transform: translateY(100%);
+            transition: transform 0.4s cubic-bezier(0.16,1,0.3,1);
+        }
+        #jarvis-overlay.vis { transform: translateY(0); }
+
+        .j-header {
+            display: flex; align-items: center; gap: 8px;
+            font-size: 0.54rem; font-weight: 700; letter-spacing: 3px; text-transform: uppercase;
+            color: rgba(124,58,237,0.7);
+        }
+        .j-state-dot {
+            width: 6px; height: 6px; border-radius: 50%;
+            background: #7c3aed; box-shadow: 0 0 6px #7c3aed;
+            transition: background 0.3s, box-shadow 0.3s;
+        }
+        .j-state-dot.listening { background:#00f2ff; box-shadow:0 0 10px #00f2ff; animation: jPulse 0.9s ease-in-out infinite; }
+        .j-state-dot.thinking  { background:#f59e0b; box-shadow:0 0 10px #f59e0b; animation: jPulse 1.5s ease-in-out infinite; }
+        .j-state-dot.speaking  { background:#10b981; box-shadow:0 0 10px #10b981; animation: jPulse 0.55s ease-in-out infinite; }
+        @keyframes jPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.8)} }
+
+        .j-transcript { font-size:0.95rem; font-weight:500; color:#e2e8f0; min-height:24px; word-break:break-word; }
+        .j-response   { font-size:0.79rem; color:#64748b; line-height:1.65; max-height:42px; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
+
+        .j-input-row { display:flex; gap:8px; align-items:center; }
+        #j-text-input {
+            flex:1; background:rgba(255,255,255,0.05); border:1px solid rgba(124,58,237,0.2);
+            border-radius:10px; padding:10px 14px; color:#e2e8f0; font-size:0.85rem;
+            outline:none; font-family:var(--font); transition:border-color 0.2s;
+        }
+        #j-text-input:focus { border-color:rgba(124,58,237,0.55); }
+        #j-text-input::placeholder { color:#374151; }
+
+        #j-mic-btn {
+            width:44px; height:44px; border-radius:50%; border:none; cursor:pointer;
+            background:linear-gradient(135deg,#7c3aed,#00f2ff); color:#fff;
+            font-size:1.05rem; flex-shrink:0; transition:box-shadow 0.2s, transform 0.15s;
+            box-shadow:0 0 18px rgba(124,58,237,0.4); display:flex; align-items:center; justify-content:center;
+        }
+        #j-mic-btn:hover { transform:scale(1.1); box-shadow:0 0 28px rgba(124,58,237,0.7); }
+        #j-mic-btn.listening { animation:jMicRing 1s ease-out infinite; background:linear-gradient(135deg,#00f2ff,#7c3aed); }
+        @keyframes jMicRing { 0%{box-shadow:0 0 0 0 rgba(0,242,255,0.7)} 100%{box-shadow:0 0 0 18px rgba(0,242,255,0)} }
+
+        #j-send-btn { width:38px; height:38px; border-radius:9px; border:none; cursor:pointer; background:rgba(124,58,237,0.25); color:#a78bfa; font-size:1rem; font-weight:700; flex-shrink:0; transition:background 0.2s,color 0.2s; }
+        #j-send-btn:hover { background:rgba(124,58,237,0.55); color:#fff; }
+        #j-exit-btn { width:32px; height:32px; border-radius:8px; cursor:pointer; background:transparent; border:1px solid rgba(255,255,255,0.08); color:#4b5563; font-size:0.85rem; flex-shrink:0; transition:color 0.2s; }
+        #j-exit-btn:hover { color:#e2e8f0; }
+
+        .j-notice { font-size:0.59rem; color:#374151; }
+        .j-notice a { color:#7c3aed; text-decoration:none; }
+        .j-notice a:hover { color:#a78bfa; }
+
+        /* API key modal */
+        #j-key-modal {
+            position:fixed; inset:0; z-index:350;
+            background:rgba(0,0,0,0.72); backdrop-filter:blur(14px);
+            display:none; align-items:center; justify-content:center;
+            animation:fadeIn 0.3s ease;
+        }
+        #j-key-modal.vis { display:flex; }
+        .jkm { background:rgba(6,10,22,0.98); border:1px solid rgba(124,58,237,0.28); border-radius:20px; padding:32px 28px; max-width:420px; width:90vw; box-shadow:0 0 80px rgba(124,58,237,0.12),0 30px 80px rgba(0,0,0,0.6); }
+        .jkm-ic { font-size:2.2rem; text-align:center; margin-bottom:10px; }
+        .jkm h3 { font-size:1.15rem; font-weight:800; color:#fff; margin-bottom:6px; }
+        .jkm p  { font-size:0.79rem; color:#64748b; line-height:1.65; margin-bottom:16px; }
+        .jkm p a { color:#7c3aed; text-decoration:none; }
+        .jkm p a:hover { color:#a78bfa; }
+        .jkm p strong { color:#a78bfa; }
+        #j-key-input { width:100%; background:rgba(255,255,255,0.05); border:1px solid rgba(124,58,237,0.25); border-radius:10px; padding:11px 14px; color:#e2e8f0; font-size:0.85rem; outline:none; margin-bottom:12px; font-family:var(--font); }
+        #j-key-input:focus { border-color:rgba(124,58,237,0.6); }
+        .jkm-btns { display:flex; flex-direction:column; gap:8px; }
+        .jkm-save { padding:13px; background:linear-gradient(135deg,#7c3aed,#00f2ff); color:#fff; border:none; border-radius:10px; font-size:0.88rem; font-weight:700; cursor:pointer; transition:opacity 0.2s; }
+        .jkm-save:hover { opacity:0.85; }
+        .jkm-skip { padding:10px; background:transparent; border:1px solid rgba(255,255,255,0.1); border-radius:10px; color:#4b5563; font-size:0.8rem; cursor:pointer; transition:color 0.2s; }
+        .jkm-skip:hover { color:#94a3b8; }
+        .jkm-clear { padding:7px; background:transparent; border:none; color:#374151; font-size:0.68rem; cursor:pointer; transition:color 0.2s; text-align:center; }
+        .jkm-clear:hover { color:#ef4444; }
+
         /* ─── Mobile ────────────────────────────────────────── */
         @media (max-width: 620px) {
             :root { --pw: auto; }
@@ -720,6 +813,42 @@
                 </div>
             </div>
             <button class="ob-go" onclick="dismissOnboarding()">Launch Experience →</button>
+        </div>
+    </div>
+
+    <!-- ── JARVIS Overlay ───────────────────────────────────── -->
+    <div id="jarvis-overlay">
+        <div class="j-header">
+            <div class="j-state-dot" id="j-dot"></div>
+            <span id="j-state-label">LUMINA AI &nbsp;·&nbsp; STANDBY</span>
+            <span style="flex:1"></span>
+            <span style="font-size:0.5rem;opacity:0.3;letter-spacing:2px">J KEY</span>
+        </div>
+        <div>
+            <div class="j-transcript" id="j-transcript"><span style="color:#374151">Speak or type your question…</span></div>
+            <div class="j-response" id="j-response"></div>
+        </div>
+        <div class="j-input-row">
+            <input type="text" id="j-text-input" placeholder="Ask anything…" autocomplete="off" spellcheck="false">
+            <button id="j-mic-btn" title="Click to speak">🎤</button>
+            <button id="j-send-btn" title="Send (Enter)">→</button>
+            <button id="j-exit-btn" title="Exit JARVIS (J)">✕</button>
+        </div>
+        <div class="j-notice">Powered by Gemini AI &nbsp;·&nbsp; <a href="#" id="j-change-key">Change API key</a></div>
+    </div>
+
+    <!-- ── JARVIS API Key Modal ──────────────────────────────── -->
+    <div id="j-key-modal">
+        <div class="jkm">
+            <div class="jkm-ic">🤖</div>
+            <h3>Connect LUMINA to AI</h3>
+            <p>Get a <strong>free</strong> Gemini API key from <a href="https://aistudio.google.com/app/apikey" target="_blank">Google AI Studio ↗</a> — 30 seconds, no credit card. Your key stays in your browser and is only sent directly to Google's API.</p>
+            <input type="text" id="j-key-input" placeholder="AIzaSy… paste key here">
+            <div class="jkm-btns">
+                <button class="jkm-save" id="j-key-save">Save Key &amp; Launch JARVIS →</button>
+                <button class="jkm-skip" id="j-key-skip">Skip AI &nbsp;·&nbsp; text-echo mode only</button>
+                <button class="jkm-clear" id="j-key-clear" style="display:none">🗑 Clear saved key</button>
+            </div>
         </div>
     </div>
 
@@ -810,6 +939,7 @@
             <button class="ab" id="btn-pause">⏸ Pause</button>
             <button class="ab" id="btn-shot">📷 Save</button>
             <button class="ab" id="btn-fs" style="grid-column:span 2">⛶ Fullscreen</button>
+            <button class="ab jarvis-btn" id="btn-jarvis" style="grid-column:span 2">🤖 JARVIS Mode</button>
         </div>
 
         <!-- Camera -->
@@ -954,6 +1084,7 @@
         initMouse();
         initUI();
         initKeyboard();
+        initJarvis();
         animate();
 
         const loader = document.getElementById('loader');
@@ -1602,6 +1733,11 @@
                 case 's': takeShot(); break;
                 case 'c': cycleColor(); break;
                 case 'f': toggleFullscreen(); break;
+                case 'j':
+                    jarvisActive ? exitJarvisMode()
+                        : (localStorage.getItem('lumina-jarvis-key')
+                            ? enterJarvisMode() : showKeyModal());
+                    break;
             }
         });
     }
@@ -1647,14 +1783,19 @@
         if (controls) controls.update();
         if (window._ringUpdate) window._ringUpdate();
 
-        // ─── Scale: hand tension OR mouse tension ──────────
-        const tension = isHandDetected ? handTension : mouseTension;
-        const targetScale = 0.4 + tension * 1.55 + Math.sin(time * 1.2) * (isHandDetected ? 0 : 0.05);
-
-        particles.scale.lerp(
-            new THREE.Vector3(targetScale, targetScale, targetScale),
-            0.085
-        );
+        // ─── Scale: JARVIS text lock OR normal tension ─────
+        if (isJarvisText) {
+            micLevel += (getMicLevel() - micLevel) * 0.14;
+            const reactive = (jarvisState === 'listening' || jarvisState === 'speaking')
+                ? 1.0 + micLevel * 0.25 : 1.0;
+            particles.scale.set(reactive, reactive, reactive);
+            if (bloomPass) bloomPass.strength = CFG.bloom + micLevel * 1.5;
+        } else {
+            if (bloomPass) bloomPass.strength = CFG.bloom;
+            const tension = isHandDetected ? handTension : mouseTension;
+            const targetScale = 0.4 + tension * 1.55 + Math.sin(time * 1.2) * (isHandDetected ? 0 : 0.05);
+            particles.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), 0.085);
+        }
 
         // ─── Particle physics: lerp + organic idle noise ───
         const pos  = particles.geometry.attributes.position.array;
@@ -1666,8 +1807,8 @@
             pos[k+1] += (targetPos[k+1] - pos[k+1]) * CFG.lerpSpeed;
             pos[k+2] += (targetPos[k+2] - pos[k+2]) * CFG.lerpSpeed;
 
-            // Organic breathing drift when idle
-            if (!isHandDetected) {
+            // Organic breathing drift when idle (disabled in JARVIS text mode to keep letters crisp)
+            if (!isHandDetected && !isJarvisText) {
                 pos[k]   += Math.sin(time * 0.71 + noisePh[k])   * amp;
                 pos[k+1] += Math.cos(time * 0.53 + noisePh[k+1]) * amp;
                 pos[k+2] += Math.sin(time * 0.89 + noisePh[k+2]) * amp;
@@ -1688,6 +1829,409 @@
         } else {
             renderer.render(scene, camera);
         }
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    //  JARVIS MODE — AI voice assistant with particle text
+    //  Tech: Web Speech API + Gemini free API + canvas pixel sampling
+    // ═══════════════════════════════════════════════════════════
+
+    let jarvisActive  = false;
+    let jarvisState   = 'off';    // 'off'|'idle'|'listening'|'thinking'|'speaking'
+    let jarvisNoAI    = false;    // user skipped API key → echo mode
+    let isJarvisText  = false;    // particles currently spelling text
+    let recognition   = null;
+    let listeningOn   = false;
+    let micLevel      = 0;
+    let jAudioCtx     = null;
+    let jAnalyser     = null;
+    let jMicStream    = null;
+
+    /* ── Particle text morphing ──────────────────────────────── */
+
+    function computeTextTargets(text) {
+        const CW = 900, CH = 170;
+        const off = document.createElement('canvas');
+        off.width = CW; off.height = CH;
+        const ctx = off.getContext('2d');
+
+        // Auto-scale font so text fits width
+        let fs = 130;
+        ctx.font = `900 ${fs}px Inter, Arial Black, sans-serif`;
+        while (ctx.measureText(text).width > CW * 0.88 && fs > 14) {
+            fs -= 5;
+            ctx.font = `900 ${fs}px Inter, Arial Black, sans-serif`;
+        }
+        ctx.fillStyle   = '#fff';
+        ctx.textAlign   = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(text, CW / 2, CH / 2);
+
+        const px   = ctx.getImageData(0, 0, CW, CH).data;
+        const hits = [];
+        const step = 3;
+        for (let y = 0; y < CH; y += step)
+            for (let x = 0; x < CW; x += step)
+                if (px[(y * CW + x) * 4 + 3] > 90) hits.push(x, y);
+
+        // Map pixel coords → 3D scene: x [-22, 22], y [-7, 7]
+        const sx = 44 / CW, sy = 14 / CH;
+        const ns = hits.length / 2;
+        const out = new Float32Array(CFG.count * 3);
+
+        for (let i = 0; i < CFG.count; i++) {
+            if (ns > 0) {
+                const si = Math.floor(Math.random() * ns) * 2;
+                out[i*3]   =  (hits[si]   - CW/2) * sx + (Math.random()-0.5)*0.35;
+                out[i*3+1] = -(hits[si+1] - CH/2) * sy + (Math.random()-0.5)*0.35;
+                out[i*3+2] =  (Math.random()-0.5) * 1.8;
+            } else {
+                const p = randSphere(10);
+                out[i*3]=p.x; out[i*3+1]=p.y; out[i*3+2]=p.z;
+            }
+        }
+        return out;
+    }
+
+    function morphToText(text) {
+        if (!text || !text.trim()) return;
+        text = text.trim().toUpperCase();
+        const tgts = computeTextTargets(text);
+
+        if (!isJarvisText) {
+            // First text: scatter then form
+            isJarvisText = true;
+            const saved = CFG.lerpSpeed;
+            CFG.lerpSpeed = 0.18;
+            for (let i = 0; i < CFG.count; i++) {
+                const p = randSphere(22 + Math.random()*7);
+                targetPos[i*3]=p.x; targetPos[i*3+1]=p.y; targetPos[i*3+2]=p.z;
+            }
+            setTimeout(() => {
+                for (let i = 0; i < CFG.count; i++) {
+                    targetPos[i*3]=tgts[i*3]; targetPos[i*3+1]=tgts[i*3+1]; targetPos[i*3+2]=tgts[i*3+2];
+                }
+                CFG.lerpSpeed = saved;
+            }, 270);
+        } else {
+            // Already in text mode — smooth text-to-text flow
+            for (let i = 0; i < CFG.count; i++) {
+                targetPos[i*3]=tgts[i*3]; targetPos[i*3+1]=tgts[i*3+1]; targetPos[i*3+2]=tgts[i*3+2];
+            }
+        }
+    }
+
+    /* ── Mic audio level ────────────────────────────────────── */
+
+    async function startMicAudio() {
+        if (jAudioCtx) return;
+        try {
+            jMicStream  = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+            jAudioCtx   = new (window.AudioContext || window.webkitAudioContext)();
+            const src   = jAudioCtx.createMediaStreamSource(jMicStream);
+            jAnalyser   = jAudioCtx.createAnalyser();
+            jAnalyser.fftSize = 256;
+            src.connect(jAnalyser);
+        } catch(e) { /* mic audio unavailable */ }
+    }
+
+    function stopMicAudio() {
+        if (jMicStream) { jMicStream.getTracks().forEach(t => t.stop()); jMicStream = null; }
+        if (jAudioCtx)  { jAudioCtx.close(); jAudioCtx = null; }
+        jAnalyser = null; micLevel = 0;
+    }
+
+    function getMicLevel() {
+        if (!jAnalyser) return 0;
+        const buf = new Uint8Array(jAnalyser.frequencyBinCount);
+        jAnalyser.getByteFrequencyData(buf);
+        return buf.reduce((a,b)=>a+b,0) / buf.length / 128;
+    }
+
+    /* ── State UI ───────────────────────────────────────────── */
+
+    function setJarvisState(s) {
+        jarvisState = s;
+        const dot   = document.getElementById('j-dot');
+        const lbl   = document.getElementById('j-state-label');
+        const mic   = document.getElementById('j-mic-btn');
+        dot.className = 'j-state-dot ' + s;
+        mic.classList.toggle('listening', s === 'listening');
+        mic.textContent = s === 'listening' ? '⏹' : '🎤';
+        const map = { idle:'LUMINA AI · STANDBY', listening:'LUMINA AI · LISTENING…', thinking:'LUMINA AI · PROCESSING…', speaking:'LUMINA AI · SPEAKING' };
+        lbl.textContent = map[s] || 'LUMINA AI';
+    }
+
+    /* ── Enter / Exit ───────────────────────────────────────── */
+
+    function enterJarvisMode() {
+        jarvisActive = true;
+        if (controls) controls.autoRotate = false;
+        const ov = document.getElementById('jarvis-overlay');
+        ov.style.display = 'flex';
+        requestAnimationFrame(() => ov.classList.add('vis'));
+        document.getElementById('btn-jarvis').classList.add('active');
+        document.getElementById('j-transcript').innerHTML = '<span style="color:#374151">Speak or type your question…</span>';
+        document.getElementById('j-response').textContent = '';
+        applyColor('#00f2ff');
+        morphToText('LUMINA');
+        setJarvisState('idle');
+        startMicAudio();
+        toast('🤖 JARVIS mode · J to exit');
+    }
+
+    function exitJarvisMode() {
+        jarvisActive = false;
+        stopListeningNow();
+        if (window.speechSynthesis) window.speechSynthesis.cancel();
+        stopMicAudio();
+        const ov = document.getElementById('jarvis-overlay');
+        ov.classList.remove('vis');
+        setTimeout(() => { ov.style.display='none'; }, 400);
+        document.getElementById('btn-jarvis').classList.remove('active');
+        isJarvisText = false;
+        applyColor(PALETTE[colorIdx]);
+        morphTo(currentShape);
+        if (controls) controls.autoRotate = true;
+        setJarvisState('off');
+        toast('JARVIS off');
+    }
+
+    /* ── Speech recognition ─────────────────────────────────── */
+
+    function startListeningNow() {
+        const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SR) { document.getElementById('j-text-input').focus(); toast('Use text box — mic API not available'); return; }
+        if (listeningOn) { stopListeningNow(); return; }
+
+        recognition = new SR();
+        recognition.continuous = false;
+        recognition.interimResults = true;
+        recognition.lang = 'en-US';
+        listeningOn = true;
+        setJarvisState('listening');
+        morphToText('LISTENING');
+
+        recognition.onresult = (e) => {
+            const parts   = Array.from(e.results);
+            const full    = parts.map(r => r[0].transcript).join('');
+            const final   = parts[parts.length-1].isFinal;
+            const txEl    = document.getElementById('j-transcript');
+            txEl.innerHTML = final ? `<strong>${full}</strong>` : `${full}<span style="color:#374151">…</span>`;
+
+            // Show last 1-2 words in particles as user speaks
+            const words = full.trim().split(/\s+/);
+            const chunk = words.slice(-2).join(' ');
+            if (chunk.length > 1) morphToText(chunk);
+
+            if (final) { listeningOn = false; recognition.stop(); processJarvisQuery(full.trim()); }
+        };
+
+        recognition.onerror = (e) => {
+            listeningOn = false;
+            setJarvisState('idle');
+            morphToText('ERROR');
+            setTimeout(() => { if (jarvisActive) morphToText('LUMINA'); }, 1600);
+            toast('Mic error: ' + (e.error || 'unknown'));
+        };
+
+        recognition.onend = () => { if (listeningOn) { listeningOn = false; setJarvisState('idle'); } };
+        recognition.start();
+    }
+
+    function stopListeningNow() {
+        listeningOn = false;
+        if (recognition) { try { recognition.abort(); } catch(e){} recognition = null; }
+        if (jarvisActive) setJarvisState('idle');
+    }
+
+    /* ── Query → Gemini → TTS ───────────────────────────────── */
+
+    async function processJarvisQuery(text) {
+        if (!text) return;
+        document.getElementById('j-transcript').innerHTML = `<strong>${text}</strong>`;
+        document.getElementById('j-response').textContent = '';
+        setJarvisState('thinking');
+        morphToText('THINKING');
+
+        const key = localStorage.getItem('lumina-jarvis-key');
+
+        if (!key || jarvisNoAI) {
+            await jarvisSay(`You said: "${text}". No AI key set — I am in echo mode.`);
+            return;
+        }
+
+        try {
+            const answer = await callGemini(text, key);
+            document.getElementById('j-response').textContent = answer;
+            await jarvisSay(answer);
+        } catch(err) {
+            setJarvisState('idle');
+            morphToText('ERROR');
+            document.getElementById('j-response').textContent = 'AI error: ' + err.message;
+            setTimeout(() => { if (jarvisActive) morphToText('LUMINA'); }, 2200);
+            toast('API error — check key');
+        }
+    }
+
+    async function callGemini(prompt, apiKey) {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{ parts: [{ text:
+                    `You are LUMINA, an AI inside a WebGL particle engine. Answer in 1-2 crisp sentences, no markdown, no lists. User: "${prompt}"`
+                }] }],
+                generationConfig: { maxOutputTokens: 130, temperature: 0.75 }
+            })
+        });
+        if (!res.ok) {
+            const e = await res.json().catch(()=>({}));
+            throw new Error((e.error && e.error.message) || `HTTP ${res.status}`);
+        }
+        const d = await res.json();
+        return d.candidates[0].content.parts[0].text.trim();
+    }
+
+    /* ── TTS with particle word sync ────────────────────────── */
+
+    function jarvisSay(text) {
+        return new Promise(resolve => {
+            if (!window.speechSynthesis) {
+                setJarvisState('idle');
+                if (jarvisActive) setTimeout(() => { isJarvisText=false; morphTo('nebula'); }, 2000);
+                resolve(); return;
+            }
+
+            setJarvisState('speaking');
+
+            // Extract meaningful words (>3 chars) to cycle in particles
+            const words = text.split(/\s+/).filter(w => w.replace(/[^a-zA-Z]/g,'').length > 3);
+            let wi = 0;
+            let fallbackTimer = null;
+
+            const utt = new SpeechSynthesisUtterance(text);
+            utt.rate   = 0.92;
+            utt.pitch  = 1.0;
+            utt.volume = 1.0;
+
+            // Prefer a natural English voice
+            const voices = window.speechSynthesis.getVoices();
+            const pick = voices.find(v => /Google|Alex|Samantha|Premium|Enhanced/i.test(v.name) && v.lang.startsWith('en'))
+                      || voices.find(v => v.lang.startsWith('en-') && !v.localService)
+                      || voices.find(v => v.lang.startsWith('en'));
+            if (pick) utt.voice = pick;
+
+            // Primary: word boundary events (Chrome/Edge)
+            utt.onboundary = (e) => {
+                if (e.name !== 'word') return;
+                const w = text.substr(e.charIndex).split(/[\s,.!?]/)[0].replace(/[^a-zA-Z0-9]/g,'').toUpperCase();
+                if (w.length > 2) morphToText(w);
+            };
+
+            // Fallback: timed cycling (~420ms/word)
+            if (words.length > 0) {
+                fallbackTimer = setInterval(() => {
+                    if (wi >= words.length) { clearInterval(fallbackTimer); return; }
+                    const w = words[wi++].replace(/[^a-zA-Z0-9]/g,'').toUpperCase();
+                    if (w.length > 2) morphToText(w);
+                }, 420);
+            }
+
+            utt.onend = () => {
+                if (fallbackTimer) clearInterval(fallbackTimer);
+                setJarvisState('idle');
+                morphToText('LUMINA');
+                setTimeout(() => {
+                    if (jarvisActive && jarvisState === 'idle') {
+                        isJarvisText = false;
+                        morphTo('nebula');
+                    }
+                }, 3500);
+                resolve();
+            };
+
+            utt.onerror = () => {
+                if (fallbackTimer) clearInterval(fallbackTimer);
+                setJarvisState('idle');
+                morphToText('LUMINA');
+                resolve();
+            };
+
+            window.speechSynthesis.cancel();
+            // Small delay — some browsers need this after cancel()
+            setTimeout(() => window.speechSynthesis.speak(utt), 120);
+        });
+    }
+
+    /* ── API key modal ──────────────────────────────────────── */
+
+    function showKeyModal() {
+        const m = document.getElementById('j-key-modal');
+        m.classList.add('vis');
+        const saved = localStorage.getItem('lumina-jarvis-key');
+        if (saved) {
+            document.getElementById('j-key-input').value = saved;
+            document.getElementById('j-key-clear').style.display = 'block';
+        }
+    }
+
+    function hideKeyModal() {
+        document.getElementById('j-key-modal').classList.remove('vis');
+    }
+
+    /* ── Wire up all JARVIS UI ──────────────────────────────── */
+
+    function initJarvis() {
+        document.getElementById('btn-jarvis').addEventListener('click', () => {
+            if (jarvisActive) { exitJarvisMode(); return; }
+            localStorage.getItem('lumina-jarvis-key') ? enterJarvisMode() : showKeyModal();
+        });
+
+        document.getElementById('j-mic-btn').addEventListener('click', () => {
+            if (jarvisState === 'thinking' || jarvisState === 'speaking') return;
+            startListeningNow();
+        });
+
+        const sendFn = () => {
+            const val = document.getElementById('j-text-input').value.trim();
+            if (!val) return;
+            document.getElementById('j-text-input').value = '';
+            document.getElementById('j-transcript').innerHTML = `<strong>${val}</strong>`;
+            processJarvisQuery(val);
+        };
+        document.getElementById('j-send-btn').addEventListener('click', sendFn);
+        document.getElementById('j-text-input').addEventListener('keydown', e => { if(e.key==='Enter') sendFn(); });
+
+        document.getElementById('j-exit-btn').addEventListener('click', exitJarvisMode);
+
+        document.getElementById('j-change-key').addEventListener('click', e => { e.preventDefault(); showKeyModal(); });
+
+        document.getElementById('j-key-save').addEventListener('click', () => {
+            const k = document.getElementById('j-key-input').value.trim();
+            if (!k) { toast('Paste your Gemini API key first'); return; }
+            localStorage.setItem('lumina-jarvis-key', k);
+            jarvisNoAI = false;
+            hideKeyModal();
+            if (!jarvisActive) enterJarvisMode();
+        });
+
+        document.getElementById('j-key-skip').addEventListener('click', () => {
+            jarvisNoAI = true;
+            hideKeyModal();
+            if (!jarvisActive) enterJarvisMode();
+        });
+
+        document.getElementById('j-key-clear').addEventListener('click', () => {
+            localStorage.removeItem('lumina-jarvis-key');
+            document.getElementById('j-key-input').value = '';
+            document.getElementById('j-key-clear').style.display = 'none';
+            toast('API key cleared');
+        });
+
+        // Voices load async in some browsers
+        if (window.speechSynthesis) window.speechSynthesis.onvoiceschanged = () => {};
     }
 
     // ═══════════════════════════════════════════════════════════
