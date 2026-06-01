@@ -1,17 +1,17 @@
-# ✨ Flux Particles — 3D Hand-Reactive Particle System
+# ✦ LUMINA — WebGL Interactive Particle Engine
 
 <p align="center">
+  <img src="https://img.shields.io/badge/WebGL-Bloom-00f2ff?style=for-the-badge" />
   <img src="https://img.shields.io/badge/Three.js-r128-black?style=for-the-badge&logo=three.js" />
-  <img src="https://img.shields.io/badge/MediaPipe-Hands-blue?style=for-the-badge" />
-  <img src="https://img.shields.io/badge/WebGL-2.0-red?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/MediaPipe-AI%20Hands-7c3aed?style=for-the-badge" />
   <img src="https://img.shields.io/badge/Vanilla-JavaScript-yellow?style=for-the-badge&logo=javascript" />
   <img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" />
 </p>
 
 <p align="center">
-  <strong>A real-time, browser-based 3D particle system that reacts to your hand gestures via webcam.</strong><br/>
-  Open your hand → particles expand. Close your fist → they contract.<br/>
-  Switch between 6 stunning particle templates: Heart, Nebula, Saturn, and more.
+  <strong>Real-time 3D particle engine with UnrealBloom glow, AI hand tracking, and GPU cursor physics.</strong><br/>
+  Particles flee your cursor. Click to attract them. Show your hand to command the cloud.<br/>
+  9 shape templates. 9 color presets. Zero install. One file.
 </p>
 
 <p align="center">
@@ -24,149 +24,147 @@
 
 ## 🎮 Live Demo
 
-> Open your webcam and watch 15,000 particles respond to your hand in real-time. No installation, no backend — just a browser.
-
-**[→ Open Live Demo](https://3d-showroom-harshit.vercel.app)**
+**[→ Launch LUMINA](https://nova-particles.vercel.app)**
 
 ---
 
-## 🌟 Features
+## 💼 IT Industry Use Cases
 
-### Core
-- **Real-Time Hand Tracking** — Google MediaPipe Hands; up to 2 hands, no backend
-- **Hand Tension Interaction** — Maps open palm → expand / closed fist → contract
-- **15,000 Particles** — Smooth 60 FPS with custom GLSL shader
-- **Custom Glow Shader** — Per-particle soft circular glow with HSL color variation (not PointsMaterial)
-- **Organic Idle Animation** — Phase-offset sin/cos noise keeps particles alive when no hand is present
+LUMINA is a ready-made WebGL showcase for any professional context:
 
-### 9 Particle Templates
-| # | Template | Description |
+| Use Case | How |
+|---|---|
+| **Tech Conference Backdrop** | Run fullscreen on a display behind your talk stage |
+| **Client Pitch / Sales Demo** | Set brand colors via the color picker, morph to a relevant shape |
+| **Developer Portfolio** | Deploy in 60 seconds — immediately demonstrates WebGL expertise |
+| **Job Interview Showpiece** | Demonstrates Three.js, custom GLSL shaders, AI integration, real-time 3D |
+| **Product Launch Screen** | Customize colors to brand palette, use as interactive loading/splash screen |
+| **WebGL Capability Demo** | Show clients "what's possible in the browser" without any app download |
+| **Workshop / Training** | Teach Three.js, shader programming, MediaPipe, post-processing concepts |
+
+---
+
+## ✨ What Makes It Wow
+
+### Engine
+- **UnrealBloom post-processing** — particles glow like real neon lights; bloom spreads across the scene
+- **Custom GLSL ShaderMaterial** — per-particle soft circular glow with HSL hue/brightness variation
+- **GPU cursor physics** — cursor repulsion/attraction computed entirely on the GPU in the vertex shader (zero CPU cost)
+- **Background star field** — 2,200 tinted stars with slow rotation create depth and atmosphere
+
+### Interaction (works without camera)
+- **Cursor repel** — move your cursor and particles flee it in real-time
+- **Click + hold** — particles rush toward your cursor (attract mode)
+- **Mouse distance** controls particle expansion when no camera is active
+- **Touch support** — full mobile gesture support
+
+### AI Hand Tracking (optional, requires webcam)
+- **Hand tension** — open palm expands the cloud, closed fist contracts it
+- **Pinch gesture** — thumb + index cycle through 9 preset colors
+- Powered by Google MediaPipe, runs entirely in the browser
+
+### 9 Shape Templates
+| # | Shape | Description |
 |---|---|---|
-| 1 | 💥 Fireworks | Random explosive scatter |
-| 2 | ❤️ Heart | Volumetric 3D algebraic heart surface |
+| 1 | 💥 Fireworks | Explosive scatter |
+| 2 | ❤️ Heart | Volumetric algebraic heart surface |
 | 3 | 🌸 Flower | Parametric rose in spherical coords |
 | 4 | 🪐 Saturn | Planet sphere + ring system |
-| 5 | 🧘 Buddha | Procedural seated meditation figure |
+| 5 | 🧘 Buddha | Procedural seated figure |
 | 6 | 🌌 Nebula | 3-armed Archimedean spiral galaxy |
 | 7 | 🧬 DNA | Double helix — two strands offset by π |
-| 8 | 🌪️ Vortex | Expanding spiral cone (tornado) |
+| 8 | 🌪️ Vortex | Expanding spiral cone |
 | 9 | ⭐ Star | 8-arm starburst |
 
-### Interaction
-- **Pinch gesture** (thumb + index) → cycles through 9 preset colors
-- **Morph speed slider** — tune interpolation from glacial to instant
-- **Particle size slider** — live-update via shader uniform
-- **Pause / Resume** — freeze the animation mid-morph
-- **Screenshot / Save** — one-click PNG download of the current frame
-
-### UX
-- First-run onboarding overlay (shown once, stored in localStorage)
-- Keyboard shortcuts: `1–9` shapes, `Space` pause, `R` reset camera, `H` hide panel, `S` screenshot
-- 9 quick-pick color presets + full color picker
-- Hide/show control panel (clean fullscreen mode)
-- OrbitControls — drag to rotate; auto-rotates when idle
-- Depth fog for 3D perception
-- Responsive (desktop, tablet, mobile)
-- **Zero dependencies to install** — all libs load from CDN
+Every shape transition **scatters → reforms** with a dramatic explosion effect.
 
 ---
 
-## 🚀 Deploy to Vercel (One Click)
+## 🚀 Deploy in 60 Seconds
+
+### Vercel (recommended)
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/Harshitgupta5290/3d-showroom)
 
-The included `vercel.json` sets the required `Permissions-Policy: camera=*` header so webcam access works on the deployed URL.
+The included `vercel.json` sets `Permissions-Policy: camera=*` so webcam works on the deployed URL.
 
----
-
-## 💻 Run Locally
-
-**Requirements:** Any modern browser with WebGL support. No Node.js or build tools needed.
+### Local
 
 ```bash
 git clone https://github.com/Harshitgupta5290/3d-showroom.git
 cd 3d-showroom
 
-# Option A — Python (recommended for webcam access)
+# Python
 python3 -m http.server 8000
-# Visit: http://localhost:8000
+# → http://localhost:8000
 
-# Option B — Node.js
+# Node
 npx serve .
-# Visit: http://localhost:3000
+# → http://localhost:3000
 ```
 
-> **Note:** Open via `http://localhost:...`, not `file://` — browsers block webcam for file:// URLs.
+> Always serve via `http://localhost` — webcam requires a secure context (`file://` won't work).
+
+---
+
+## 🎮 Controls
+
+| Input | Action |
+|---|---|
+| **Move cursor** | Particles flee (GPU repulsion field) |
+| **Click + hold** | Particles rush toward cursor |
+| **Scroll** | Zoom in/out |
+| **Drag** | Orbit the 3D scene |
+| `1` – `9` | Switch shape template |
+| `Space` | Pause / Resume |
+| `R` | Reset camera |
+| `H` | Toggle control panel |
+| `S` | Save screenshot as PNG |
+| `F` | Fullscreen |
+| `C` | Cycle color preset |
+| **🤏 Pinch** | Cycle colors (camera mode) |
+| **🖐️ Open palm** | Expand particles (camera mode) |
+| **✊ Closed fist** | Contract particles (camera mode) |
+
+---
+
+## ⚙️ Configuration
+
+Edit these values in the `CFG` object at the top of `<script>`:
+
+```javascript
+const CFG = {
+    count:     15000,   // Particle count (lower for slow devices)
+    size:      0.12,    // Base particle size (also controllable via UI slider)
+    lerpSpeed: 0.08,    // Morph speed (0.01 = glacial, 0.3 = instant)
+    bloom:     1.4,     // Bloom strength (also controllable via UI slider)
+};
+```
 
 ---
 
 ## 📁 What's Included
 
 ```
-3d-showroom/
-├── index.html      # Complete app (HTML + CSS + JS, ~660 lines)
-├── vercel.json     # Vercel deployment config (camera header)
+nova/
+├── index.html      # Complete app — HTML + CSS + GLSL + JS (~1,300 lines)
+├── vercel.json     # Vercel deployment config (camera permissions header)
 ├── LICENSE         # MIT License
 └── README.md
 ```
 
-All logic is self-contained in `index.html`. No build step, no npm install, no server required.
-
----
-
-## 🎮 How to Use
-
-1. **Allow camera** when the browser prompts
-2. The status dot turns green once the camera is active
-3. **Show your hand** to the webcam:
-   - ✊ Close fist → particles contract
-   - 🖐️ Open palm → particles expand
-   - 🤏 Pinch (thumb + index) → cycle colors
-4. **Select a template** from the panel (or press `1–9`)
-5. **Adjust sliders** to tune morph speed and particle size
-6. **Click + drag** anywhere to orbit the 3D scene
-7. Press `H` to hide the panel for a clean view · `S` to save a screenshot
-
-### Keyboard Shortcuts
-| Key | Action |
-|---|---|
-| `1` – `9` | Switch particle template |
-| `Space` | Pause / Resume animation |
-| `R` | Reset camera to default view |
-| `H` | Toggle control panel |
-| `S` | Save screenshot as PNG |
-
----
-
-## ⚙️ Configuration
-
-Edit these values near the top of the `<script>` in `index.html`:
-
-```javascript
-const CONFIG = {
-    count: 15000,       // Particle count (lower = better performance on slow devices)
-    size: 0.12,         // Particle point size in world units
-    lerpSpeed: 0.08,    // Morphing speed (0.01 = slow, 0.3 = instant)
-    defaultColor: 0x00f2ff  // Default color (hex)
-};
-```
-
-Hand sensitivity (adjust if your hand size differs):
-```javascript
-const minVal = 0.15;  // Closed fist threshold
-const maxVal = 0.45;  // Open palm threshold
-```
+Single file. No build step. No npm. No server required (beyond a basic HTTP server for camera).
 
 ---
 
 ## 🛠️ Tech Stack
 
-| Technology | Purpose |
+| Technology | Role |
 |---|---|
-| [Three.js r128](https://threejs.org/) | WebGL 3D rendering |
-| [MediaPipe Hands](https://google.github.io/mediapipe/solutions/hands) | Real-time hand landmark detection |
-| [MediaPipe Camera Utils](https://www.npmjs.com/package/@mediapipe/camera_utils) | Webcam frame capture |
-| Three.js OrbitControls | Mouse/touch 3D navigation |
+| [Three.js r128](https://threejs.org/) | WebGL 3D rendering, scene graph |
+| Custom GLSL ShaderMaterial | Per-particle bloom glow + GPU cursor physics |
+| [Three.js UnrealBloomPass](https://threejs.org/examples/?q=bloom) | HDR bloom post-processing |
+| [Google MediaPipe Hands](https://mediapipe.dev/) | Real-time AI hand landmark detection |
 | Vanilla JavaScript (ES6+) | Application logic |
 
 ---
@@ -175,11 +173,11 @@ const maxVal = 0.45;  // Open palm threshold
 
 | Issue | Fix |
 |---|---|
-| Camera blocked | Serve via `http://localhost` (not `file://`); check browser camera permission |
-| Hand not detected | Improve lighting; keep hand 30–60 cm from camera; use Chrome |
-| Low FPS | Lower `CONFIG.count` to 5000–8000 |
-| OrbitControls missing | Check browser console; CDN may be unavailable — use a local server |
-| Webcam blocked on Vercel | `vercel.json` sets `Permissions-Policy: camera=*` — re-deploy if missing |
+| **Camera not starting** | Must be served over HTTPS or `localhost`. Check browser address-bar camera permission icon. |
+| **Camera blocked on Vercel** | `vercel.json` sets `Permissions-Policy: camera=*` — ensure latest code is deployed. |
+| **Bloom not visible** | Check browser console — post-processing CDN scripts must load. |
+| **Low FPS** | Lower `CFG.count` to 8000 in the script config. |
+| **Black screen** | WebGL must be enabled. Check `chrome://settings` → System → Hardware acceleration. |
 
 ---
 
@@ -189,13 +187,4 @@ const maxVal = 0.45;  // Open palm threshold
 
 ---
 
-## 🙏 Acknowledgements
-
-- [Three.js](https://threejs.org/) by Mr.doob and contributors
-- [Google MediaPipe](https://mediapipe.dev/) for real-time ML hand tracking
-- Algebraic heart surface formula from the mathematics community
-
----
-
-**Made with ❤️ by [Harshit Gupta](https://github.com/Harshitgupta5290)**  
-If you found this useful, consider giving it a ⭐ on GitHub!
+**Made with ✦ by [Harshit Gupta](https://github.com/Harshitgupta5290)**
