@@ -546,11 +546,16 @@
         #btn-cam.vis { display: block; }
 
         .cam-help {
-            font-size: 0.6rem;
-            color: #374151;
-            margin-top: 6px;
-            line-height: 1.5;
+            font-size: 0.62rem;
+            color: #6b7280;
+            margin-top: 7px;
+            line-height: 1.6;
             display: none;
+            user-select: text;
+            padding: 7px 9px;
+            background: rgba(239,68,68,0.06);
+            border-radius: 6px;
+            border-left: 2px solid rgba(239,68,68,0.3);
         }
 
         .cam-help.vis { display: block; }
@@ -1287,9 +1292,8 @@
     let handsInstance = null;
     let cameraUtil    = null;
 
-    function startCamera() {
+    async function startCamera() {
         if (cameraInited) return;
-        cameraInited = true;
 
         const video   = document.getElementById('input-video');
         const dot     = document.getElementById('cam-dot');
@@ -1297,10 +1301,54 @@
         const btnCam  = document.getElementById('btn-cam');
         const helpEl  = document.getElementById('cam-help');
 
-        dot.className = 'cam-dot warn';
-        status.innerText = 'Starting camera…';
+        dot.className    = 'cam-dot warn';
+        status.innerText = 'Checking camera…';
+        status.style.color = '';
         btnCam.classList.remove('vis');
+        helpEl.classList.remove('vis');
 
+        // ── Step 1: test getUserMedia ourselves BEFORE touching MediaPipe
+        //    so we can intercept the error and show a friendly message
+        //    instead of letting MediaPipe throw a browser-level alert dialog.
+        let testStream = null;
+        try {
+            testStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        } catch (err) {
+            dot.className      = 'cam-dot';
+            status.style.color = '#ef4444';
+            btnCam.innerText   = 'Retry';
+            btnCam.classList.add('vis');
+            helpEl.classList.add('vis');
+
+            switch (err.name) {
+                case 'NotFoundError':
+                case 'DevicesNotFoundError':
+                    status.innerText = 'No camera found';
+                    helpEl.innerText = 'No webcam detected on this device. Connect one and click Retry. Mouse/touch interaction is fully active.';
+                    break;
+                case 'NotAllowedError':
+                case 'PermissionDeniedError':
+                    status.innerText = 'Camera permission denied';
+                    helpEl.innerText = 'Click the camera icon in the browser address bar → Allow, then click Retry.';
+                    break;
+                case 'NotReadableError':
+                case 'TrackStartError':
+                    status.innerText = 'Camera in use';
+                    helpEl.innerText = 'Another app is using the camera (Zoom, Teams, etc.). Close it and click Retry.';
+                    break;
+                default:
+                    status.innerText = 'Camera unavailable';
+                    helpEl.innerText = `${err.name}: ${err.message}`;
+            }
+            return;
+        }
+
+        // Camera confirmed accessible — stop test stream, hand off to MediaPipe
+        testStream.getTracks().forEach(t => t.stop());
+        cameraInited = true;
+        status.innerText = 'Loading AI model…';
+
+        // ── Step 2: initialize MediaPipe (safe now — camera exists + permitted)
         handsInstance = new Hands({
             locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}`
         });
@@ -1326,12 +1374,11 @@
                         const t = lm[idx];
                         avg += Math.sqrt((t.x-w.x)**2+(t.y-w.y)**2+(t.z-w.z)**2);
                     });
-                    totalDist += avg/5;
+                    totalDist += avg / 5;
                     handCount++;
 
-                    // Pinch: thumb (4) vs index (8)
-                    const th=lm[4], ix=lm[8];
-                    const pd=Math.sqrt((th.x-ix.x)**2+(th.y-ix.y)**2+(th.z-ix.z)**2);
+                    const th = lm[4], ix = lm[8];
+                    const pd = Math.sqrt((th.x-ix.x)**2+(th.y-ix.y)**2+(th.z-ix.z)**2);
                     if (pd < 0.05) pinching = true;
                 });
 
@@ -1339,37 +1386,39 @@
                 wasPinching = pinching;
 
                 handTension = Math.max(0, Math.min(1, ((totalDist/handCount) - 0.15) / 0.30));
-                status.innerText = 'Tracking hands ✓';
+                status.innerText   = 'Tracking hands ✓';
                 status.style.color = '#22c55e';
-                dot.className = 'cam-dot on';
+                dot.className      = 'cam-dot on';
 
             } else {
                 isHandDetected = false;
                 wasPinching    = false;
                 if (controls) controls.autoRotate = true;
-                status.innerText = 'No hands in frame';
+                status.innerText   = 'No hands in frame';
                 status.style.color = '';
             }
         });
 
         cameraUtil = new Camera(video, {
-            onFrame: async () => { await handsInstance.send({image: video}); },
+            onFrame: async () => { await handsInstance.send({ image: video }); },
             width: 640, height: 480
         });
 
         cameraUtil.start()
             .then(() => {
-                dot.className = 'cam-dot on';
+                dot.className    = 'cam-dot on';
                 status.innerText = 'Camera active — show hands';
                 helpEl.classList.remove('vis');
             })
             .catch(err => {
-                console.warn('Camera error:', err);
-                cameraInited = false;
-                dot.className = 'cam-dot';
-                status.innerText = 'Camera blocked';
+                // Shouldn't reach here after the pre-check, but just in case
+                console.warn('MediaPipe camera error:', err);
+                cameraInited     = false;
+                dot.className    = 'cam-dot';
+                status.innerText = 'Camera failed';
                 status.style.color = '#ef4444';
-                btnCam.innerText  = 'Retry';
+                helpEl.innerText = err.message || 'Unknown error. Try refreshing.';
+                btnCam.innerText = 'Retry';
                 btnCam.classList.add('vis');
                 helpEl.classList.add('vis');
             });
